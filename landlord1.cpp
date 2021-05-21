@@ -427,11 +427,11 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::TRIPLET2)
 				temp.push_back(18+8*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::BOMB)
-				temp.push_back(50+20*F(i.ComboLevel));
+				temp.push_back(250+15*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::QUADRUPLE2)
-				temp.push_back(100+20*F(i.ComboLevel));
+				temp.push_back(300+15*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::QUADRUPLE4)
-				temp.push_back(150+20*F(i.ComboLevel));
+				temp.push_back(350+15*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::PLANE)
 				temp.push_back(1+8*G(i.Combolen)+6*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::PLANE1)
@@ -974,13 +974,13 @@ namespace Mid_envaluate{
 				score=18+8*F(ComboLevel);
 				break;
 			case CardComboType::BOMB:
-				score=50+20*F(ComboLevel);
+				score=250+15*F(ComboLevel);
 				break;
 			case CardComboType::QUADRUPLE2:
-				score=100+20*F(ComboLevel);
+				score=300+15*F(ComboLevel);
 				break;
 			case CardComboType::QUADRUPLE4:
-				score=150+20*F(ComboLevel);
+				score=350+15*F(ComboLevel);
 				break;
 			case CardComboType::PLANE:
 				score=1+6*F(ComboLevel)+8*G(Combolen);
@@ -1011,8 +1011,11 @@ namespace Mid_envaluate{
 		}
 		double scoreMy=Comboscore_Inside(Mymove);
 		double scorePass=Comboscore_Inside(lastValidCombo);
-		double Punish=max(0.0,scorePass-scoreMy);
-		Punish=Punish*(1.0-pow(0.996,Punish));
+		double Punish=max(0.0,scoreMy-scorePass);
+		Punish=Punish*min(0.06*Punish,pow(1.029,Punish)-1);
+		//cout<<"scoreMy: "<<scoreMy<<"scorePass: "<<scorePass<<' '<<Punish<<endl;
+		if ((lastPosition>0)&&(myPosition>0)) Punish=Punish*10;
+		else if ((lastPosition!=0)^(myPosition!=0)) Punish=Punish*0.1;
 		return scoreMy+pow(max(0.1,1.0*(2000-scoreMy)),0.7)/*出牌难易程度加分*/-Punish;
 	}
 	double Score2prob(double score){
@@ -1043,8 +1046,8 @@ namespace Mid_envaluate{
 		#ifdef zyy
 			cout<<Comboscore(combo)<<' '<<score<<' '<<score0<<' '<<score1<<' '<<score2<<endl;
 		#endif
-		if (lastPosition==-1||((lastPosition==0)==(myPosition==0))) score+=0.1*Comboscore(combo);
-		else score+=Comboscore(combo); 
+		if (lastPosition==-1) score+=0.1*Comboscore(combo);
+		else score+=Comboscore(combo);
 		if (myPosition!=0) score*=Score2prob(score0);
 		if (myPosition!=1) score*=Score2prob(score1);
 		if (myPosition!=2) score*=Score2prob(score2);
@@ -1145,7 +1148,8 @@ namespace Action{
 		score.resize(Valid.size());
 		int play_round=0;
 		//#ifdef zyy
-		for (;clock()<=0.7*CLOCKS_PER_SEC;){
+		//for (;clock()<=0.7*CLOCKS_PER_SEC;)
+		{
 			multiset<Card> Player0,Player1,Player2;
 			Split_Card(Player0,Player1,Player2);
 			int index=0;
