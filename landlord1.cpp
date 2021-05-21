@@ -6,9 +6,9 @@
 #include <string>
 #include <cstdlib>
 #include <cassert>
-#include <cstring> // 注意memset是cstring里的
+#include <cstring> // ×¢ÒâmemsetÊÇcstringÀïµÄ
 #include <algorithm>
-#include "jsoncpp/json.h" // 在平台上，C++编译时默认包含此库
+#include "jsoncpp/json.h" // ÔÚÆ½Ì¨ÉÏ£¬C++±àÒëÊ±Ä¬ÈÏ°üº¬´Ë¿â
 
 
 using namespace std;
@@ -24,31 +24,31 @@ constexpr int PLAYER_COUNT = 3;
 
 enum class Stage
 {
-	BIDDING, // 叫分阶段
-	PLAYING	 // 打牌阶段
+	BIDDING, // ½Ð·Ö½×¶Î
+	PLAYING	 // ´òÅÆ½×¶Î
 };
 
 enum class CardComboType
 {
-	PASS,		// 过
-	SINGLE,		// 单张
-	PAIR,		// 对子
-	STRAIGHT,	// 顺子
-	STRAIGHT2,	// 双顺
-	TRIPLET,	// 三条
-	TRIPLET1,	// 三带一
-	TRIPLET2,	// 三带二
-	BOMB,		// 炸弹
-	QUADRUPLE2, // 四带二（只）
-	QUADRUPLE4, // 四带二（对）
-	PLANE,		// 飞机
-	PLANE1,		// 飞机带小翼
-	PLANE2,		// 飞机带大翼
-	SSHUTTLE,	// 航天飞机
-	SSHUTTLE2,	// 航天飞机带小翼
-	SSHUTTLE4,	// 航天飞机带大翼
-	ROCKET,		// 火箭
-	INVALID		// 非法牌型
+	PASS,		// ¹ý
+	SINGLE,		// µ¥ÕÅ
+	PAIR,		// ¶Ô×Ó
+	STRAIGHT,	// Ë³×Ó
+	STRAIGHT2,	// Ë«Ë³
+	TRIPLET,	// ÈýÌõ
+	TRIPLET1,	// Èý´øÒ»
+	TRIPLET2,	// Èý´ø¶þ
+	BOMB,		// Õ¨µ¯
+	QUADRUPLE2, // ËÄ´ø¶þ£¨Ö»£©
+	QUADRUPLE4, // ËÄ´ø¶þ£¨¶Ô£©
+	PLANE,		// ·É»ú
+	PLANE1,		// ·É»ú´øÐ¡Òí
+	PLANE2,		// ·É»ú´ø´óÒí
+	SSHUTTLE,	// º½Ìì·É»ú
+	SSHUTTLE2,	// º½Ìì·É»ú´øÐ¡Òí
+	SSHUTTLE4,	// º½Ìì·É»ú´ø´óÒí
+	ROCKET,		// »ð¼ý
+	INVALID		// ·Ç·¨ÅÆÐÍ
 };
 
 #ifndef _BOTZONE_ONLINE
@@ -74,15 +74,15 @@ string cardComboStrings[] = {
 	"INVALID"};
 #endif
 
-// 用0~53这54个整数表示唯一的一张牌
+// ÓÃ0~53Õâ54¸öÕûÊý±íÊ¾Î¨Ò»µÄÒ»ÕÅÅÆ
 using Card = short;
 constexpr Card card_joker = 52;
 constexpr Card card_JOKER = 53;
 
-// 除了用0~53这54个整数表示唯一的牌，
-// 这里还用另一种序号表示牌的大小（不管花色），以便比较，称作等级（Level）
-// 对应关系如下：
-// 3 4 5 6 7 8 9 10	J Q K	A	2	小王	大王
+// ³ýÁËÓÃ0~53Õâ54¸öÕûÊý±íÊ¾Î¨Ò»µÄÅÆ£¬
+// ÕâÀï»¹ÓÃÁíÒ»ÖÖÐòºÅ±íÊ¾ÅÆµÄ´óÐ¡£¨²»¹Ü»¨É«£©£¬ÒÔ±ã±È½Ï£¬³Æ×÷µÈ¼¶£¨Level£©
+// ¶ÔÓ¦¹ØÏµÈçÏÂ£º
+// 3 4 5 6 7 8 9 10	J Q K	A	2	Ð¡Íõ	´óÍõ
 // 0 1 2 3 4 5 6 7	8 9 10	11	12	13	14
 using Level = short;
 constexpr Level MAX_LEVEL = 15;
@@ -91,17 +91,17 @@ constexpr Level level_joker = 13;
 constexpr Level level_JOKER = 14;
 
 /**
-* 将Card变成Level
+* ½«Card±ä³ÉLevel
 */
 constexpr Level card2level(Card card){
 	return card / 4 + card / 53;
 }
 
-// 牌的组合，用于计算牌型
+// ÅÆµÄ×éºÏ£¬ÓÃÓÚ¼ÆËãÅÆÐÍ
 struct CardCombo
 {
-	// 表示同等级的牌有多少张
-	// 会按个数从大到小、等级从大到小排序
+	// ±íÊ¾Í¬µÈ¼¶µÄÅÆÓÐ¶àÉÙÕÅ
+	// »á°´¸öÊý´Ó´óµ½Ð¡¡¢µÈ¼¶´Ó´óµ½Ð¡ÅÅÐò
 	struct CardPack
 	{
 		Level level;
@@ -114,13 +114,13 @@ struct CardCombo
 			return count > b.count;
 		}
 	};
-	vector<Card> cards;		 // 原始的牌，未排序
-	vector<CardPack> packs;	 // 按数目和大小排序的牌种
-	CardComboType comboType; // 算出的牌型
-	Level comboLevel = 0;	 // 算出的大小序
+	vector<Card> cards;		 // Ô­Ê¼µÄÅÆ£¬Î´ÅÅÐò
+	vector<CardPack> packs;	 // °´ÊýÄ¿ºÍ´óÐ¡ÅÅÐòµÄÅÆÖÖ
+	CardComboType comboType; // Ëã³öµÄÅÆÐÍ
+	Level comboLevel = 0;	 // Ëã³öµÄ´óÐ¡Ðò
 
 	/**
-						  * 检查个数最多的CardPack递减了几个
+						  * ¼ì²é¸öÊý×î¶àµÄCardPackµÝ¼õÁË¼¸¸ö
 						  */
 	int findMaxSeq() const
 	{
@@ -131,28 +131,28 @@ struct CardCombo
 		return packs.size();
 	}
 
-	// 创建一个空牌组
+	// ´´½¨Ò»¸ö¿ÕÅÆ×é
 	CardCombo() : comboType(CardComboType::PASS) {}
 
 	/**
-	* 通过Card（即short）类型的迭代器创建一个牌型
-	* 并计算出牌型和大小序等
-	* 假设输入没有重复数字（即重复的Card）
+	* Í¨¹ýCard£¨¼´short£©ÀàÐÍµÄµü´úÆ÷´´½¨Ò»¸öÅÆÐÍ
+	* ²¢¼ÆËã³öÅÆÐÍºÍ´óÐ¡ÐòµÈ
+	* ¼ÙÉèÊäÈëÃ»ÓÐÖØ¸´Êý×Ö£¨¼´ÖØ¸´µÄCard£©
 	*/
 	template <typename CARD_ITERATOR>
 	CardCombo(CARD_ITERATOR begin, CARD_ITERATOR end)
 	{
-		// 特判：空
+		// ÌØÅÐ£º¿Õ
 		if (begin == end)
 		{
 			comboType = CardComboType::PASS;
 			return;
 		}
 
-		// 每种牌有多少个
+		// Ã¿ÖÖÅÆÓÐ¶àÉÙ¸ö
 		short counts[MAX_LEVEL + 1] = {};
 
-		// 同种牌的张数（有多少个单张、对子、三条、四条）
+		// Í¬ÖÖÅÆµÄÕÅÊý£¨ÓÐ¶àÉÙ¸öµ¥ÕÅ¡¢¶Ô×Ó¡¢ÈýÌõ¡¢ËÄÌõ£©
 		short countOfCount[5] = {};
 
 		cards = vector<Card>(begin, end);
@@ -166,11 +166,11 @@ struct CardCombo
 			}
 		sort(packs.begin(), packs.end());
 
-		// 用最多的那种牌总是可以比较大小的
+		// ÓÃ×î¶àµÄÄÇÖÖÅÆ×ÜÊÇ¿ÉÒÔ±È½Ï´óÐ¡µÄ
 		comboLevel = packs[0].level;
 
-		// 计算牌型
-		// 按照 同种牌的张数 有几种 进行分类
+		// ¼ÆËãÅÆÐÍ
+		// °´ÕÕ Í¬ÖÖÅÆµÄÕÅÊý ÓÐ¼¸ÖÖ ½øÐÐ·ÖÀà
 		vector<int> kindOfCountOfCount;
 		for (int i = 0; i <= 4; i++)
 			if (countOfCount[i])
@@ -181,12 +181,12 @@ struct CardCombo
 
 		switch (kindOfCountOfCount.size())
 		{
-		case 1: // 只有一类牌
+		case 1: // Ö»ÓÐÒ»ÀàÅÆ
 			curr = countOfCount[kindOfCountOfCount[0]];
 			switch (kindOfCountOfCount[0])
 			{
 			case 1:
-				// 只有若干单张
+				// Ö»ÓÐÈô¸Éµ¥ÕÅ
 				if (curr == 1)
 				{
 					comboType = CardComboType::SINGLE;
@@ -205,7 +205,7 @@ struct CardCombo
 				}
 				break;
 			case 2:
-				// 只有若干对子
+				// Ö»ÓÐÈô¸É¶Ô×Ó
 				if (curr == 1)
 				{
 					comboType = CardComboType::PAIR;
@@ -219,7 +219,7 @@ struct CardCombo
 				}
 				break;
 			case 3:
-				// 只有若干三条
+				// Ö»ÓÐÈô¸ÉÈýÌõ
 				if (curr == 1)
 				{
 					comboType = CardComboType::TRIPLET;
@@ -233,7 +233,7 @@ struct CardCombo
 				}
 				break;
 			case 4:
-				// 只有若干四条
+				// Ö»ÓÐÈô¸ÉËÄÌõ
 				if (curr == 1)
 				{
 					comboType = CardComboType::BOMB;
@@ -247,15 +247,15 @@ struct CardCombo
 				}
 			}
 			break;
-		case 2: // 有两类牌
+		case 2: // ÓÐÁ½ÀàÅÆ
 			curr = countOfCount[kindOfCountOfCount[1]];
 			lesser = countOfCount[kindOfCountOfCount[0]];
 			if (kindOfCountOfCount[1] == 3)
 			{
-				// 三条带？
+				// ÈýÌõ´ø£¿
 				if (kindOfCountOfCount[0] == 1)
 				{
-					// 三带一
+					// Èý´øÒ»
 					if (curr == 1 && lesser == 1)
 					{
 						comboType = CardComboType::TRIPLET1;
@@ -270,7 +270,7 @@ struct CardCombo
 				}
 				if (kindOfCountOfCount[0] == 2)
 				{
-					// 三带二
+					// Èý´ø¶þ
 					if (curr == 1 && lesser == 1)
 					{
 						comboType = CardComboType::TRIPLET2;
@@ -286,10 +286,10 @@ struct CardCombo
 			}
 			if (kindOfCountOfCount[1] == 4)
 			{
-				// 四条带？
+				// ËÄÌõ´ø£¿
 				if (kindOfCountOfCount[0] == 1)
 				{
-					// 四条带两只 * n
+					// ËÄÌõ´øÁ½Ö» * n
 					if (curr == 1 && lesser == 2)
 					{
 						comboType = CardComboType::QUADRUPLE2;
@@ -304,7 +304,7 @@ struct CardCombo
 				}
 				if (kindOfCountOfCount[0] == 2)
 				{
-					// 四条带两对 * n
+					// ËÄÌõ´øÁ½¶Ô * n
 					if (curr == 1 && lesser == 2)
 					{
 						comboType = CardComboType::QUADRUPLE4;
@@ -324,7 +324,7 @@ struct CardCombo
 	}
 
 	/**
-	* 判断指定牌组能否大过当前牌组（这个函数不考虑过牌的情况！）
+	* ÅÐ¶ÏÖ¸¶¨ÅÆ×éÄÜ·ñ´ó¹ýµ±Ç°ÅÆ×é£¨Õâ¸öº¯Êý²»¿¼ÂÇ¹ýÅÆµÄÇé¿ö£¡£©
 	*/
 	bool canBeBeatenBy(const CardCombo &b) const
 	{
@@ -349,35 +349,37 @@ struct CardCombo
 	void debugPrint()
 	{
 #ifndef _BOTZONE_ONLINE
-		std::cout << "【" << cardComboStrings[(int)comboType] << "共" << cards.size() << "张，大小序" << comboLevel << "】";
+		std::cout << "¡¾" << cardComboStrings[(int)comboType] << "¹²" << cards.size() << "ÕÅ£¬´óÐ¡Ðò" << comboLevel << "¡¿";
 #endif
 	}
 };
 
-/* 状态 */
-// 我的牌有哪些
+/* ×´Ì¬ */
+// ÎÒµÄÅÆÓÐÄÄÐ©
 set<Card> myCards;
-// 地主明示的牌有哪些
+// µØÖ÷Ã÷Ê¾µÄÅÆÓÐÄÄÐ©
 set<Card> landlordPublicCards;
-// 大家从最开始到现在都出过什么
+// ´ó¼Ò´Ó×î¿ªÊ¼µ½ÏÖÔÚ¶¼³ö¹ýÊ²Ã´
 vector<vector<Card>> whatTheyPlayed[PLAYER_COUNT];
-// 当前要出的牌需要大过谁
+// µ±Ç°Òª³öµÄÅÆÐèÒª´ó¹ýË­
 CardCombo lastValidCombo;
-// 大家还剩多少牌
+// µ±Ç°Òª´ó¹ýµÄÅÆÊÇË­³öµÄ 
+int lastPosition=-1;
+// ´ó¼Ò»¹Ê£¶àÉÙÅÆ
 short cardRemaining[PLAYER_COUNT] = {17, 17, 17};
-// 我是几号玩家（0-地主，1-农民甲，2-农民乙）
+// ÎÒÊÇ¼¸ºÅÍæ¼Ò£¨0-µØÖ÷£¬1-Å©Ãñ¼×£¬2-Å©ÃñÒÒ£©
 int myPosition;
-// 地主位置
+// µØÖ÷Î»ÖÃ
 int landlordPosition = -1;
-// 地主叫分
+// µØÖ÷½Ð·Ö
 int landlordBid = -1;
-// 阶段
+// ½×¶Î
 Stage stage = Stage::BIDDING;
 
-// 自己的第一回合收到的叫分决策
+// ×Ô¼ºµÄµÚÒ»»ØºÏÊÕµ½µÄ½Ð·Ö¾ö²ß
 vector<int> bidInput;
 
-//这部分用于叫分时刻的决策。
+//Õâ²¿·ÖÓÃÓÚ½Ð·ÖÊ±¿ÌµÄ¾ö²ß¡£
 namespace Envaluator_inital{
 	
 	bool initized=false;
@@ -395,7 +397,7 @@ namespace Envaluator_inital{
 	int Punish[50005];
 	const int min_straight_len[]={
 		0,5,3,2
-	};//顺子最小的长度
+	};//Ë³×Ó×îÐ¡µÄ³¤¶È
 	
 	int F(int level){
 		return (int)(pow(1.37,level));
@@ -439,7 +441,7 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::ROCKET)
 				temp.push_back(800);
 		}
-		int result=-pow(2,2.5*temp.size()/2); /*出牌次数过多有惩罚*/
+		int result=-pow(2,2.5*temp.size()/2); /*³öÅÆ´ÎÊý¹ý¶àÓÐ³Í·£*/
 		for (auto i:temp) result+=i-Punish[i];
 		if (Combos.size()>=1){
 			int lv=0;
@@ -476,7 +478,7 @@ namespace Envaluator_inital{
 		return 1;
 	}
 	
-	//贪心处理三带一，三带二的情况
+	//Ì°ÐÄ´¦ÀíÈý´øÒ»£¬Èý´ø¶þµÄÇé¿ö
 	void Update(vector<MyCardCombo> Combos,int SANDAI1,int SIDAI1,int BOMB){
 		//cout<<"Update"<<' '<<SANDAI1<<' '<<SIDAI1<<endl;
 		//static 
@@ -516,9 +518,9 @@ namespace Envaluator_inital{
 		
 		//cout<<"UpdateE"<<' '<<SANDAI1<<' '<<SIDAI1<<endl;
 	}
-	//这里我们认为我们不会特别的欧皇，选到航天飞机 这里选择不判。
-	//提取出来没有straight的牌型号
-	//这里我们认为不会拆掉形如 222 的牌型
+	//ÕâÀïÎÒÃÇÈÏÎªÎÒÃÇ²»»áÌØ±ðµÄÅ·»Ê£¬Ñ¡µ½º½Ìì·É»ú ÕâÀïÑ¡Ôñ²»ÅÐ¡£
+	//ÌáÈ¡³öÀ´Ã»ÓÐstraightµÄÅÆÐÍºÅ
+	//ÕâÀïÎÒÃÇÈÏÎª²»»á²ðµôÐÎÈç 222 µÄÅÆÐÍ
 	void no_straight(vector<MyCardCombo> Combos){
 		//cout<<"no_Str"<<endl;
 		for (int i=0;i<=4;i++)
@@ -543,7 +545,7 @@ namespace Envaluator_inital{
 					Combos.push_back((MyCardCombo){CardComboType::BOMB,i,-1});
 					break;
 			}
-		//王炸
+		//ÍõÕ¨
 		if (level_num[13]&&level_num[14]){
 			Combos.pop_back();
 			Combos.pop_back();
@@ -562,7 +564,7 @@ namespace Envaluator_inital{
 		//cout<<"no_StrE"<<endl;
 	}
 	void dfs_straight(int,int,vector<MyCardCombo>);
-	//飞机翅膀
+	//·É»ú³á°ò
 	void dfs_plane(int straight_num,int straight_ind,int num,int rem,int ind,vector<MyCardCombo> Combos){
 		//cout<<"d_plane"<<endl;
 		if (!rem){
@@ -582,7 +584,7 @@ namespace Envaluator_inital{
 		}
 		//cout<<"d_planeE"<<endl;
 	}
-	//搜出来所有的顺子
+	//ËÑ³öÀ´ËùÓÐµÄË³×Ó
 	void dfs_straight(int straight_num,int straight_ind,vector<MyCardCombo> Combos){
 		//cout<<straight_num<<' '<<straight_ind<<endl;
 		if (straight_num>=4)
@@ -606,28 +608,28 @@ namespace Envaluator_inital{
 				}
 				for (;;){
 					switch (straight_num){
-						//顺子
+						//Ë³×Ó
 						case 1:
 							Combos.push_back((MyCardCombo){CardComboType::STRAIGHT,straight_ind,loc-straight_ind});
 							dfs_straight(straight_num,straight_ind,Combos);
 							Combos.pop_back();
 							break;
-						//连对
+						//Á¬¶Ô
 						case 2:
 							Combos.push_back((MyCardCombo){CardComboType::STRAIGHT2,straight_ind,loc-straight_ind});
 							dfs_straight(straight_num,straight_ind,Combos);
 							Combos.pop_back();
 							break;
-						//飞机
+						//·É»ú
 						case 3:
 							Combos.push_back((MyCardCombo){CardComboType::PLANE,straight_ind,loc-straight_ind});
 							dfs_straight(straight_num,straight_ind,Combos);
 							Combos.pop_back();
-						  //飞机小翅膀
+						  //·É»úÐ¡³á°ò
 						  	Combos.push_back((MyCardCombo){CardComboType::PLANE1,straight_ind,loc-straight_ind});
 						  	dfs_plane(straight_num,straight_ind,1,loc-straight_ind,0,Combos);
 						  	Combos.pop_back();
-						  //飞机大翅膀
+						  //·É»ú´ó³á°ò
 						  	Combos.push_back((MyCardCombo){CardComboType::PLANE2,straight_ind,loc-straight_ind});
 						  	dfs_plane(straight_num,straight_ind,2,loc-straight_ind,0,Combos);
 						  	Combos.pop_back();
@@ -681,22 +683,22 @@ namespace BotzoneIO
 	using namespace std;
 	void read()
 	{
-		// 读入输入（平台上的输入是单行）
+		// ¶ÁÈëÊäÈë£¨Æ½Ì¨ÉÏµÄÊäÈëÊÇµ¥ÐÐ£©
 		string line;
 		getline(cin, line);
 		Json::Value input;
 		Json::Reader reader;
 		reader.parse(line, input);
 
-		// 首先处理第一回合，得知自己是谁、有哪些牌
+		// Ê×ÏÈ´¦ÀíµÚÒ»»ØºÏ£¬µÃÖª×Ô¼ºÊÇË­¡¢ÓÐÄÄÐ©ÅÆ
 		{
-			auto firstRequest = input["requests"][0u]; // 下标需要是 unsigned，可以通过在数字后面加u来做到
+			auto firstRequest = input["requests"][0u]; // ÏÂ±êÐèÒªÊÇ unsigned£¬¿ÉÒÔÍ¨¹ýÔÚÊý×ÖºóÃæ¼ÓuÀ´×öµ½
 			auto own = firstRequest["own"];
 			for (unsigned i = 0; i < own.size(); i++)
 				myCards.insert(own[i].asInt());
 			if (!firstRequest["bid"].isNull())
 			{
-				// 如果还可以叫分，则记录叫分
+				// Èç¹û»¹¿ÉÒÔ½Ð·Ö£¬Ôò¼ÇÂ¼½Ð·Ö
 				auto bidHistory = firstRequest["bid"];
 				myPosition = bidHistory.size();
 				for (unsigned i = 0; i < bidHistory.size(); i++)
@@ -704,7 +706,7 @@ namespace BotzoneIO
 			}
 		}
 
-		// history里第一项（上上家）和第二项（上家）分别是谁的决策
+		// historyÀïµÚÒ»Ïî£¨ÉÏÉÏ¼Ò£©ºÍµÚ¶þÏî£¨ÉÏ¼Ò£©·Ö±ðÊÇË­µÄ¾ö²ß
 		int whoInHistory[] = {0,0};
 		//(myPosition - 1 + PLAYER_COUNT) % PLAYER_COUNT, (myPosition - 2 + PLAYER_COUNT) % PLAYER_COUNT};
 
@@ -715,7 +717,7 @@ namespace BotzoneIO
 			auto llpublic = request["publiccard"];
 			if (!llpublic.isNull())
 			{
-				// 第一次得知公共牌、地主叫分和地主是谁
+				// µÚÒ»´ÎµÃÖª¹«¹²ÅÆ¡¢µØÖ÷½Ð·ÖºÍµØÖ÷ÊÇË­
 				landlordPosition = request["landlord"].asInt();
 				landlordBid = request["finalbid"].asInt();
 				myPosition = request["pos"].asInt();
@@ -732,56 +734,59 @@ namespace BotzoneIO
 				}
 			}
 
-			auto history = request["history"]; // 每个历史中有上家和上上家出的牌
+			auto history = request["history"]; // Ã¿¸öÀúÊ·ÖÐÓÐÉÏ¼ÒºÍÉÏÉÏ¼Ò³öµÄÅÆ
 			if (history.isNull())
 				continue;
 			stage = Stage::PLAYING;
 
-			// 逐次恢复局面到当前
+			// Öð´Î»Ö¸´¾ÖÃæµ½µ±Ç°
 			int howManyPass = 0;
 			for (int p = 0; p < 2; p++)
 			{
-				int player = whoInHistory[p];	// 是谁出的牌
-				auto playerAction = history[p]; // 出的哪些牌
+				int player = whoInHistory[p];	// ÊÇË­³öµÄÅÆ
+				auto playerAction = history[p]; // ³öµÄÄÄÐ©ÅÆ
 				//cout<<p<<' '<<player<<' '<<myPosition<<endl;
 				vector<Card> playedCards;
-				for (unsigned _ = 0; _ < playerAction.size(); _++) // 循环枚举这个人出的所有牌
+				for (unsigned _ = 0; _ < playerAction.size(); _++) // Ñ­»·Ã¶¾ÙÕâ¸öÈË³öµÄËùÓÐÅÆ
 				{
-					int card = playerAction[_].asInt(); // 这里是出的一张牌
+					int card = playerAction[_].asInt(); // ÕâÀïÊÇ³öµÄÒ»ÕÅÅÆ
 					playedCards.push_back(card);
 				}
 				//cout<<playedCards.size()<<endl;
-				whatTheyPlayed[player].push_back(playedCards); // 记录这段历史
+				whatTheyPlayed[player].push_back(playedCards); // ¼ÇÂ¼Õâ¶ÎÀúÊ·
 				cardRemaining[player] -= playerAction.size();
 
 				if (playerAction.size() == 0)
 					howManyPass++;
 				else
+				{ 
 					lastValidCombo = CardCombo(playedCards.begin(), playedCards.end());
+					lastPosition = player;
+				}
 			}
 
 			if (howManyPass == 2)
-				lastValidCombo = CardCombo();
+				lastValidCombo = CardCombo(),lastPosition=-1;
 
 			if (i < turn - 1)
 			{
-				// 还要恢复自己曾经出过的牌
-				auto playerAction = input["responses"][i]; // 出的哪些牌
+				// »¹Òª»Ö¸´×Ô¼ºÔø¾­³ö¹ýµÄÅÆ
+				auto playerAction = input["responses"][i]; // ³öµÄÄÄÐ©ÅÆ
 				vector<Card> playedCards;
-				for (unsigned _ = 0; _ < playerAction.size(); _++) // 循环枚举自己出的所有牌
+				for (unsigned _ = 0; _ < playerAction.size(); _++) // Ñ­»·Ã¶¾Ù×Ô¼º³öµÄËùÓÐÅÆ
 				{
-					int card = playerAction[_].asInt(); // 这里是自己出的一张牌
-					myCards.erase(card);				// 从自己手牌中删掉
+					int card = playerAction[_].asInt(); // ÕâÀïÊÇ×Ô¼º³öµÄÒ»ÕÅÅÆ
+					myCards.erase(card);				// ´Ó×Ô¼ºÊÖÅÆÖÐÉ¾µô
 					playedCards.push_back(card);
 				}
-				whatTheyPlayed[myPosition].push_back(playedCards); // 记录这段历史
+				whatTheyPlayed[myPosition].push_back(playedCards); // ¼ÇÂ¼Õâ¶ÎÀúÊ·
 				cardRemaining[myPosition] -= playerAction.size();
 			}
 		}
 	}
 
 	/**
-	* 输出叫分（0, 1, 2, 3 四种之一）
+	* Êä³ö½Ð·Ö£¨0, 1, 2, 3 ËÄÖÖÖ®Ò»£©
 	*/
 	void bid(int value)
 	{
@@ -793,8 +798,8 @@ namespace BotzoneIO
 	}
 
 	/**
-	* 输出打牌决策，begin是迭代器起点，end是迭代器终点
-	* CARD_ITERATOR是Card（即short）类型的迭代器
+	* Êä³ö´òÅÆ¾ö²ß£¬beginÊÇµü´úÆ÷Æðµã£¬endÊÇµü´úÆ÷ÖÕµã
+	* CARD_ITERATORÊÇCard£¨¼´short£©ÀàÐÍµÄµü´úÆ÷
 	*/
 	template <typename CARD_ITERATOR>
 	void play(CARD_ITERATOR begin, CARD_ITERATOR end)
@@ -835,10 +840,10 @@ namespace BotzoneIO
 namespace Legal_Move_Set{
 	const int min_straight_len[]={
 		0,5,3,2
-	};//顺子最小的长度
+	};//Ë³×Ó×îÐ¡µÄ³¤¶È
 	vector<Card> op[20];
 	vector<CardCombo> Legal_move;
-	//找所有可以的带的方案
+	//ÕÒËùÓÐ¿ÉÒÔµÄ´øµÄ·½°¸
 	void Update(vector<Card> combo,int banl,int banr,int rem,int num,int ind=0){
 		if (!rem){
 			Legal_move.push_back(CardCombo(combo.begin(),combo.end()));
@@ -854,7 +859,7 @@ namespace Legal_Move_Set{
 			++ind;
 		}
 	}
-	//找到所有合法的操作
+	//ÕÒµ½ËùÓÐºÏ·¨µÄ²Ù×÷
 	vector<CardCombo> find_legal_move(set<Card> S,CardCombo pre_move){
 		for (Level i=0;i<=14;i++)
 			op[i].resize(0);
@@ -867,22 +872,22 @@ namespace Legal_Move_Set{
 			switch (op[i].size()){
 				case 4:
 					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+4));//bomb
-					Update(vector<Card>(op[i].begin(),op[i].begin()+4),i,i,2,1);//四+两个
-					Update(vector<Card>(op[i].begin(),op[i].begin()+4),i,i,2,2);//四带两对
+					Update(vector<Card>(op[i].begin(),op[i].begin()+4),i,i,2,1);//ËÄ+Á½¸ö
+					Update(vector<Card>(op[i].begin(),op[i].begin()+4),i,i,2,2);//ËÄ´øÁ½¶Ô
 				case 3:
-					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+3));//三带零
-					Update(vector<Card>(op[i].begin(),op[i].begin()+3),i,i,1,1);//三带一
-					Update(vector<Card>(op[i].begin(),op[i].begin()+3),i,i,1,2);//三带而
+					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+3));//Èý´øÁã
+					Update(vector<Card>(op[i].begin(),op[i].begin()+3),i,i,1,1);//Èý´øÒ»
+					Update(vector<Card>(op[i].begin(),op[i].begin()+3),i,i,1,2);//Èý´ø¶ø
 				case 2:
-					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+2));//对子
+					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+2));//¶Ô×Ó
 				case 1:
-					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+1));//单张
+					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+1));//µ¥ÕÅ
 				case 0:
 					break;
 			}
 		if (op[13].size()&&op[14].size()){
 			vector<Card> combo={52,53};
-			Legal_move.push_back(CardCombo(combo.begin(),combo.end()));//王炸
+			Legal_move.push_back(CardCombo(combo.begin(),combo.end()));//ÍõÕ¨
 		}
 		//cout<<"P2.2"<<endl;
 		for (int straight_num=1;straight_num<=3;++straight_num)
@@ -896,10 +901,10 @@ namespace Legal_Move_Set{
 					else avaliable=0;
 				for (;avaliable;){
 					//cout<<l<<' '<<loc<<' '<<straight_num<<endl;
-					Legal_move.push_back(CardCombo(combo.begin(),combo.end()));//顺子
+					Legal_move.push_back(CardCombo(combo.begin(),combo.end()));//Ë³×Ó
 					if (straight_num==3){
 						Update(combo,l,loc-1,loc-l,1);
-						Update(combo,l,loc-1,loc-l,2);//飞机
+						Update(combo,l,loc-1,loc-l,2);//·É»ú
 					}
 					if (loc>11||op[loc].size()<straight_num) break;
 					for (int j=0;j<straight_num;j++) combo.push_back(op[loc][j]);
@@ -928,7 +933,7 @@ namespace Mid_envaluate{
 	int Scoreing(multiset<Card> S){
 		return Envaluator_inital::envaluate_ver_temp(S);
 	}
-	//给一个出牌牌组，求他的得分
+	//¸øÒ»¸ö³öÅÆÅÆ×é£¬ÇóËûµÄµÃ·Ö
 	int F(int level){
 		return (int)(pow(1.37,level));
 	}
@@ -990,14 +995,14 @@ namespace Mid_envaluate{
 				score=800;
 				break;
 			default:
-				//理论上不会出现在这里
+				//ÀíÂÛÉÏ²»»á³öÏÖÔÚÕâÀï
 				return 0;
 		}
 		return score+pow(max(0.1,1.0*(2000-score)),0.7);
 	}
 	double Score2prob(double score){
 		return exp(score/1500.0);
-	}//给分治估计出现相对概率
+	}//¸ø·ÖÖÎ¹À¼Æ³öÏÖÏà¶Ô¸ÅÂÊ
 	double envaluate(multiset<Card> S0,multiset<Card> S1,multiset<Card> S2,CardCombo combo){
 		#ifdef zyy
 			cout<<"Cards:"<<' '<<S0.size()<<' '<<S1.size()<<' '<<S2.size()<<endl;
@@ -1023,7 +1028,8 @@ namespace Mid_envaluate{
 		#ifdef zyy
 			cout<<Comboscore(combo)<<' '<<score<<' '<<score0<<' '<<score1<<' '<<score2<<endl;
 		#endif
-		score+=0.1*Comboscore(combo);
+		if (lastPosition==-1||((lastPosition==0)==(myPosition==0))) score+=0.1*Comboscore(combo);
+		else score+=Comboscore(combo); 
 		if (myPosition!=0) score*=Score2prob(score0);
 		if (myPosition!=1) score*=Score2prob(score1);
 		if (myPosition!=2) score*=Score2prob(score2);
@@ -1031,10 +1037,10 @@ namespace Mid_envaluate{
 	}
 }
 namespace Action{
-	int other_remain[20];//除去地主已经出掉的牌，两个玩家总共剩余的牌数
-	set<Card> LordPublicCards;//把地主已经出掉的牌，已知的在地主手里的牌
+	int other_remain[20];//³ýÈ¥µØÖ÷ÒÑ¾­³öµôµÄÅÆ£¬Á½¸öÍæ¼Ò×Ü¹²Ê£ÓàµÄÅÆÊý
+	set<Card> LordPublicCards;//°ÑµØÖ÷ÒÑ¾­³öµôµÄÅÆ£¬ÒÑÖªµÄÔÚµØÖ÷ÊÖÀïµÄÅÆ
 	vector<CardCombo> Valid;
-	//随机数字生成器
+	//Ëæ»úÊý×ÖÉú³ÉÆ÷
 	struct MyRandomizer{
 		unsigned long long seed;
 		MyRandomizer(){
@@ -1048,8 +1054,8 @@ namespace Action{
 		}
 	}Rnd;
 	
-	//猜测一种可能的局面
-	//分成地主/农民A/农民B
+	//²Â²âÒ»ÖÖ¿ÉÄÜµÄ¾ÖÃæ
+	//·Ö³ÉµØÖ÷/Å©ÃñA/Å©ÃñB
 	void Split_Card(multiset<Card> &S0,multiset<Card> &S1,multiset<Card> &S2){
 		S0.clear(); S1.clear(); S2.clear();
 		vector<Card> temp;
@@ -1093,7 +1099,7 @@ namespace Action{
 		}
 	}
 	
-	//找操作
+	//ÕÒ²Ù×÷
 	CardCombo findAction(){
 		for (int i=0;i<=12;i++) other_remain[i]=4;
 		other_remain[13]=other_remain[14]=1;
@@ -1107,7 +1113,7 @@ namespace Action{
 					if (LordPublicCards.find(k)!=LordPublicCards.end())
 						LordPublicCards.erase(k);
 				}
-		if (myPosition!=0)//不是地主
+		if (myPosition!=0)//²»ÊÇµØÖ÷
 			for (auto i:LordPublicCards)
 				other_remain[card2level(i)]--;
 			
@@ -1116,9 +1122,9 @@ namespace Action{
 		//	cout<<other_remain[i]<<' '; cout<<endl;
 		Valid=Legal_Move_Set::find_legal_move(myCards,lastValidCombo);
 		//cout<<"P3"<<endl;
-		if (Valid.size()==0) return CardCombo(-1,-1);//要不起
+		if (Valid.size()==0) return CardCombo(-1,-1);//Òª²»Æð
 		if (lastValidCombo.comboType!=CardComboType::PASS)
-			Valid.push_back(CardCombo(-1,-1));//过
+			Valid.push_back(CardCombo(-1,-1));//¹ý
 		//cout<<"P4"<<endl;
 		vector<double> score;
 		score.resize(Valid.size());
@@ -1172,14 +1178,14 @@ namespace Action{
 		return Valid[max_element(score.begin(),score.end())-score.begin()];
 		/*
 		Todo List
-		给一个中盘的局面，计算其得分/给出其估价
+		¸øÒ»¸öÖÐÅÌµÄ¾ÖÃæ£¬¼ÆËãÆäµÃ·Ö/¸ø³öÆä¹À¼Û
 		*/
 	}
 }
 
-//叫分阶段的参数
-//如果得分高于constant[3]叫3分,...,依次类推
-//这部分没写
+//½Ð·Ö½×¶ÎµÄ²ÎÊý
+//Èç¹ûµÃ·Ö¸ßÓÚconstant[3]½Ð3·Ö,...,ÒÀ´ÎÀàÍÆ
+//Õâ²¿·ÖÃ»Ð´
 const int constant[4]={-1,-1,-1,-1};
 
 const int constantv[5]={0,1000,2000,3000,0}; 
@@ -1195,7 +1201,7 @@ int main(){
 	if (stage == Stage::BIDDING)
 	{
 		// cout<<"GGMYFRIEND"<<endl;
-		// 做出决策（你只需修改以下部分）
+		// ×ö³ö¾ö²ß£¨ÄãÖ»ÐèÐÞ¸ÄÒÔÏÂ²¿·Ö£©
 
 		auto maxBidIt = std::max_element(bidInput.begin(), bidInput.end());
 		int maxBid = (maxBidIt == bidInput.end() ? -1 : *maxBidIt);
@@ -1207,25 +1213,25 @@ int main(){
 				if (i>maxBid){
 					bidValue=i;
 				}
-		// 决策结束，输出结果（你只需修改以上部分）
+		// ¾ö²ß½áÊø£¬Êä³ö½á¹û£¨ÄãÖ»ÐèÐÞ¸ÄÒÔÉÏ²¿·Ö£©
 
 		BotzoneIO::bid(bidValue);
 	}
 	else if (stage == Stage::PLAYING)
 	{
-		// 做出决策（你只需修改以下部分）
-		// findFirstValid 函数可以用作修改的起点
+		// ×ö³ö¾ö²ß£¨ÄãÖ»ÐèÐÞ¸ÄÒÔÏÂ²¿·Ö£©
+		// findFirstValid º¯Êý¿ÉÒÔÓÃ×÷ÐÞ¸ÄµÄÆðµã
 		CardCombo myAction = Action::findAction();
-		// 是合法牌
+		// ÊÇºÏ·¨ÅÆ
 		assert(myAction.comboType != CardComboType::INVALID);
 		assert(
-			// 在上家没过牌的时候过牌
+			// ÔÚÉÏ¼ÒÃ»¹ýÅÆµÄÊ±ºò¹ýÅÆ
 			(lastValidCombo.comboType != CardComboType::PASS && myAction.comboType == CardComboType::PASS) ||
-			// 在上家没过牌的时候出打得过的牌
+			// ÔÚÉÏ¼ÒÃ»¹ýÅÆµÄÊ±ºò³ö´òµÃ¹ýµÄÅÆ
 			(lastValidCombo.comboType != CardComboType::PASS && lastValidCombo.canBeBeatenBy(myAction)) ||
-			// 在上家过牌的时候出合法牌
+			// ÔÚÉÏ¼Ò¹ýÅÆµÄÊ±ºò³öºÏ·¨ÅÆ
 			(lastValidCombo.comboType == CardComboType::PASS && myAction.comboType != CardComboType::INVALID));
-		// 决策结束，输出结果（你只需修改以上部分）
+		// ¾ö²ß½áÊø£¬Êä³ö½á¹û£¨ÄãÖ»ÐèÐÞ¸ÄÒÔÉÏ²¿·Ö£©
 		BotzoneIO::play(myAction.cards.begin(), myAction.cards.end());
 	}
 	
