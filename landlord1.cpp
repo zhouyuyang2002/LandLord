@@ -400,6 +400,9 @@ namespace Envaluator_inital{
 	int F(int level){
 		return (int)(pow(1.37,level));
 	}
+	int G(int len){
+		return (int)(pow(1.22,len)+0.5);
+	}
 	int Scoreing(vector<MyCardCombo> Combos){
 		int ans=0;
 		vector<int> temp;
@@ -409,9 +412,9 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::PAIR)
 				temp.push_back(3+3*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::STRAIGHT)
-				temp.push_back(1+6*F(i.ComboLevel)+(3<<i.Combolen));
+				temp.push_back(1+6*F(i.ComboLevel)+3*G(i.Combolen));
 			if (i.ComboType==CardComboType::STRAIGHT2)
-				temp.push_back(1+6*F(i.ComboLevel)+(5<<(2*i.Combolen)));
+				temp.push_back(1+6*F(i.ComboLevel)+5*G(i.Combolen));
 			if (i.ComboType==CardComboType::TRIPLET)
 				temp.push_back(8+8*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::TRIPLET1)
@@ -425,16 +428,21 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::QUADRUPLE4)
 				temp.push_back(150+20*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::PLANE)
-				temp.push_back(1+6*F(i.ComboLevel)+(8<<(2*i.Combolen)));
+				temp.push_back(1+8*G(i.Combolen)+6*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::PLANE1)
-				temp.push_back(1+i.Combolen*20+6*i.ComboLevel+(8<<(2*i.Combolen)));
+				temp.push_back(1+10*G(i.Combolen)+6*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::PLANE2)
-				temp.push_back(1+i.Combolen*60+6*i.ComboLevel+(8<<(2*i.Combolen)));
+				temp.push_back(1+12*G(i.Combolen)+6*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::ROCKET)
 				temp.push_back(800);
 		}
-		int result=-(1<<temp.size()); /*出牌次数过多有惩罚*/
+		int result=-pow(2,3.0*temp.size()/2); /*出牌次数过多有惩罚*/
 		for (auto i:temp) result+=i-Punish[i];
+		/*if (result==2240){
+			cout<<"1145141919810"<<endl;
+			for (auto i:Combos) cout<<cardComboStrings[(int)i.ComboType]<<' '<<i.ComboLevel<<' '<<endl; 
+			
+		}*/
 		return result;
 	}
 	
@@ -474,7 +482,7 @@ namespace Envaluator_inital{
 				else
 					if (Legal_2(1)) i.ComboType=CardComboType::TRIPLET2;
 			}
-			else{
+			else if (i.ComboType==CardComboType::BOMB){
 				if (BOMB){
 					--BOMB;
 					continue;
@@ -613,7 +621,7 @@ namespace Envaluator_inital{
 						  	Combos.pop_back();
 						  	break;
 					}
-					if (loc>MAX_STRAIGHT_LEVEL||level_num[loc]<=straight_num)
+					if (loc>MAX_STRAIGHT_LEVEL||level_num[loc]<straight_num)
 						break;
 					level_num[loc]-=straight_num;
 					++loc;
@@ -626,6 +634,8 @@ namespace Envaluator_inital{
 		dfs_straight(straight_num+1,0,Combos);
 	}
 	int envaluate(set<Card> S){
+		if (!S.size())
+			return 10000;
 		if (!initized){
 			initized=true;
 			for (int i=1;i<=50000;i++) Punish[i]=(int)(80/sqrt(i));
@@ -640,6 +650,8 @@ namespace Envaluator_inital{
 	}
 	
 	int envaluate_ver_temp(multiset<Card> S){
+		if (!S.size())
+			return 10000;
 		if (!initized){
 			initized=true;
 			for (int i=1;i<=50000;i++) Punish[i]=(int)(80/sqrt(i));
@@ -907,6 +919,9 @@ namespace Mid_envaluate{
 	int F(int level){
 		return (int)(pow(1.37,level));
 	}
+	int G(int len){
+		return (int)(pow(1.22,len)+0.5);
+	}
 	double Comboscore(CardCombo op){
 		int score=0;
 		int ComboLevel=op.comboLevel;
@@ -926,10 +941,10 @@ namespace Mid_envaluate{
 				score=3+3*F(ComboLevel);
 				break;
 			case CardComboType::STRAIGHT:
-				score=1+6*F(ComboLevel)+(3<<Combolen);
+				score=1+6*F(ComboLevel)+3*G(Combolen);
 				break;
 			case CardComboType::STRAIGHT2:
-				score=1+6*F(ComboLevel)+(5<<(2*Combolen));
+				score=1+6*F(ComboLevel)+5*G(Combolen);
 				break;
 			case CardComboType::TRIPLET:
 				score=8+8*F(ComboLevel);
@@ -950,13 +965,13 @@ namespace Mid_envaluate{
 				score=150+20*F(ComboLevel);
 				break;
 			case CardComboType::PLANE:
-				score=1+6*F(ComboLevel)+(8<<(2*Combolen));
+				score=1+6*F(ComboLevel)+8*G(Combolen);
 				break;
 			case CardComboType::PLANE1:
-				score=1+Combolen*20+6*ComboLevel+(8<<(2*Combolen));
+				score=1+6*F(ComboLevel)+10*G(Combolen);
 				break;
 			case CardComboType::PLANE2:
-				score=1+Combolen*60+6*ComboLevel+(8<<(2*Combolen));
+				score=1+6*F(ComboLevel)+12*G(Combolen);
 				break;
 			case CardComboType::ROCKET:
 				score=800;
@@ -965,19 +980,19 @@ namespace Mid_envaluate{
 				//理论上不会出现在这里
 				return 0;
 		}
-		return score+pow(2000-score,0.5);
+		return score+pow(max(0.1,1.0*(2000-score)),0.5);
 	}
 	double Score2prob(double score){
 		return exp(score/1500.0);
 	}//给分治估计出现相对概率
 	double envaluate(multiset<Card> S0,multiset<Card> S1,multiset<Card> S2,CardCombo combo){
-		#ifdef zyy
+		/*#ifdef zyy
 			cout<<"Cards:"<<' '<<S0.size()<<' '<<S1.size()<<' '<<S2.size()<<endl;
 			cout<<cardRemaining[0]<<' '<<cardRemaining[1]<<' '<<cardRemaining[2]<<endl;
 			for (auto i:S0) cout<<i<<' '; cout<<endl;
 			for (auto i:S1) cout<<i<<' '; cout<<endl;
 			for (auto i:S2) cout<<i<<' '; cout<<endl;
-		#endif
+		#endif*/
 		memset(card_rem,0,sizeof(card_rem));
 		for (auto i:S0) ++card_rem[0][i];
 		for (auto i:S1) ++card_rem[1][i];
@@ -1088,8 +1103,8 @@ namespace Action{
 		//cout<<"P4"<<endl;
 		vector<double> score;
 		score.resize(Valid.size());
-		//for (;clock()<=0.95*CLOCKS_PER_SEC;){
-			//cout<<"P5"<<endl;
+		int play_round=0;
+		for (;clock()<=0.8*CLOCKS_PER_SEC;){
 			multiset<Card> Player0,Player1,Player2;
 			Split_Card(Player0,Player1,Player2);
 			int index=0;
@@ -1115,17 +1130,23 @@ namespace Action{
 				//cout<<score[index]<<endl;
 				index++;
 			}
-		//}
-		
+			play_round++;
+		}
+		int index=0;
+		for (auto combo:Valid){
+			score[index]+=play_round*combo.cards.size()*50;
+			index++;
+		}
 		#ifdef zyy
+			cout<<"Round Played:"<<play_round<<endl;
 			for (int i=0;i<score.size();i++){
 				Valid[i].debugPrint();
 				cout<<"Score: "<<score[i]<<endl;
 			}
 		#endif
 		//cout<<"P6"<<endl;
-		index=max_element(score.begin(),score.end())-score.begin();
-		return Valid[index];
+		//int index=max_element(score.begin(),score.end())-score.begin();
+		return Valid[max_element(score.begin(),score.end())-score.begin()];
 		/*
 		Todo List
 		给一个中盘的局面，计算其得分/给出其估价
