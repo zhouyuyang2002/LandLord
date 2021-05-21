@@ -6,9 +6,9 @@
 #include <string>
 #include <cstdlib>
 #include <cassert>
-#include <cstring> // 脳垄脪芒memset脢脟cstring脌茂碌脛
+#include <cstring> // 注意memset是cstring里的
 #include <algorithm>
-#include "jsoncpp/json.h" // 脭脷脝陆脤篓脡脧拢卢C++卤脿脪毛脢卤脛卢脠脧掳眉潞卢麓脣驴芒
+#include "jsoncpp/json.h" // 在平台上，C++编译时默认包含此库
 
 
 using namespace std;
@@ -24,31 +24,31 @@ constexpr int PLAYER_COUNT = 3;
 
 enum class Stage
 {
-	BIDDING, // 陆脨路脰陆脳露脦
-	PLAYING	 // 麓貌脜脝陆脳露脦
+	BIDDING, // 叫分阶段
+	PLAYING	 // 打牌阶段
 };
 
 enum class CardComboType
 {
-	PASS,		// 鹿媒
-	SINGLE,		// 碌楼脮脜
-	PAIR,		// 露脭脳脫
-	STRAIGHT,	// 脣鲁脳脫
-	STRAIGHT2,	// 脣芦脣鲁
-	TRIPLET,	// 脠媒脤玫
-	TRIPLET1,	// 脠媒麓酶脪禄
-	TRIPLET2,	// 脠媒麓酶露镁
-	BOMB,		// 脮篓碌炉
-	QUADRUPLE2, // 脣脛麓酶露镁拢篓脰禄拢漏
-	QUADRUPLE4, // 脣脛麓酶露镁拢篓露脭拢漏
-	PLANE,		// 路脡禄煤
-	PLANE1,		// 路脡禄煤麓酶脨隆脪铆
-	PLANE2,		// 路脡禄煤麓酶麓贸脪铆
-	SSHUTTLE,	// 潞陆脤矛路脡禄煤
-	SSHUTTLE2,	// 潞陆脤矛路脡禄煤麓酶脨隆脪铆
-	SSHUTTLE4,	// 潞陆脤矛路脡禄煤麓酶麓贸脪铆
-	ROCKET,		// 禄冒录媒
-	INVALID		// 路脟路篓脜脝脨脥
+	PASS,		// 过
+	SINGLE,		// 单张
+	PAIR,		// 对子
+	STRAIGHT,	// 顺子
+	STRAIGHT2,	// 双顺
+	TRIPLET,	// 三条
+	TRIPLET1,	// 三带一
+	TRIPLET2,	// 三带二
+	BOMB,		// 炸弹
+	QUADRUPLE2, // 四带二（只）
+	QUADRUPLE4, // 四带二（对）
+	PLANE,		// 飞机
+	PLANE1,		// 飞机带小翼
+	PLANE2,		// 飞机带大翼
+	SSHUTTLE,	// 航天飞机
+	SSHUTTLE2,	// 航天飞机带小翼
+	SSHUTTLE4,	// 航天飞机带大翼
+	ROCKET,		// 火箭
+	INVALID		// 非法牌型
 };
 
 #ifndef _BOTZONE_ONLINE
@@ -74,15 +74,15 @@ string cardComboStrings[] = {
 	"INVALID"};
 #endif
 
-// 脫脙0~53脮芒54赂枚脮没脢媒卤铆脢戮脦篓脪禄碌脛脪禄脮脜脜脝
+// 用0~53这54个整数表示唯一的一张牌
 using Card = short;
 constexpr Card card_joker = 52;
 constexpr Card card_JOKER = 53;
 
-// 鲁媒脕脣脫脙0~53脮芒54赂枚脮没脢媒卤铆脢戮脦篓脪禄碌脛脜脝拢卢
-// 脮芒脌茂禄鹿脫脙脕铆脪禄脰脰脨貌潞脜卤铆脢戮脜脝碌脛麓贸脨隆拢篓虏禄鹿脺禄篓脡芦拢漏拢卢脪脭卤茫卤脠陆脧拢卢鲁脝脳梅碌脠录露拢篓Level拢漏
-// 露脭脫娄鹿脴脧碌脠莽脧脗拢潞
-// 3 4 5 6 7 8 9 10	J Q K	A	2	脨隆脥玫	麓贸脥玫
+// 除了用0~53这54个整数表示唯一的牌，
+// 这里还用另一种序号表示牌的大小（不管花色），以便比较，称作等级（Level）
+// 对应关系如下：
+// 3 4 5 6 7 8 9 10	J Q K	A	2	小王	大王
 // 0 1 2 3 4 5 6 7	8 9 10	11	12	13	14
 using Level = short;
 constexpr Level MAX_LEVEL = 15;
@@ -91,17 +91,17 @@ constexpr Level level_joker = 13;
 constexpr Level level_JOKER = 14;
 
 /**
-* 陆芦Card卤盲鲁脡Level
+* 将Card变成Level
 */
 constexpr Level card2level(Card card){
 	return card / 4 + card / 53;
 }
 
-// 脜脝碌脛脳茅潞脧拢卢脫脙脫脷录脝脣茫脜脝脨脥
+// 牌的组合，用于计算牌型
 struct CardCombo
 {
-	// 卤铆脢戮脥卢碌脠录露碌脛脜脝脫脨露脿脡脵脮脜
-	// 禄谩掳麓赂枚脢媒麓脫麓贸碌陆脨隆隆垄碌脠录露麓脫麓贸碌陆脨隆脜脜脨貌
+	// 表示同等级的牌有多少张
+	// 会按个数从大到小、等级从大到小排序
 	struct CardPack
 	{
 		Level level;
@@ -114,13 +114,13 @@ struct CardCombo
 			return count > b.count;
 		}
 	};
-	vector<Card> cards;		 // 脭颅脢录碌脛脜脝拢卢脦麓脜脜脨貌
-	vector<CardPack> packs;	 // 掳麓脢媒脛驴潞脥麓贸脨隆脜脜脨貌碌脛脜脝脰脰
-	CardComboType comboType; // 脣茫鲁枚碌脛脜脝脨脥
-	Level comboLevel = 0;	 // 脣茫鲁枚碌脛麓贸脨隆脨貌
+	vector<Card> cards;		 // 原始的牌，未排序
+	vector<CardPack> packs;	 // 按数目和大小排序的牌种
+	CardComboType comboType; // 算出的牌型
+	Level comboLevel = 0;	 // 算出的大小序
 
 	/**
-						  * 录矛虏茅赂枚脢媒脳卯露脿碌脛CardPack碌脻录玫脕脣录赂赂枚
+						  * 检查个数最多的CardPack递减了几个
 						  */
 	int findMaxSeq() const
 	{
@@ -131,28 +131,28 @@ struct CardCombo
 		return packs.size();
 	}
 
-	// 麓麓陆篓脪禄赂枚驴脮脜脝脳茅
+	// 创建一个空牌组
 	CardCombo() : comboType(CardComboType::PASS) {}
 
 	/**
-	* 脥篓鹿媒Card拢篓录麓short拢漏脌脿脨脥碌脛碌眉麓煤脝梅麓麓陆篓脪禄赂枚脜脝脨脥
-	* 虏垄录脝脣茫鲁枚脜脝脨脥潞脥麓贸脨隆脨貌碌脠
-	* 录脵脡猫脢盲脠毛脙禄脫脨脰脴赂麓脢媒脳脰拢篓录麓脰脴赂麓碌脛Card拢漏
+	* 通过Card（即short）类型的迭代器创建一个牌型
+	* 并计算出牌型和大小序等
+	* 假设输入没有重复数字（即重复的Card）
 	*/
 	template <typename CARD_ITERATOR>
 	CardCombo(CARD_ITERATOR begin, CARD_ITERATOR end)
 	{
-		// 脤脴脜脨拢潞驴脮
+		// 特判：空
 		if (begin == end)
 		{
 			comboType = CardComboType::PASS;
 			return;
 		}
 
-		// 脙驴脰脰脜脝脫脨露脿脡脵赂枚
+		// 每种牌有多少个
 		short counts[MAX_LEVEL + 1] = {};
 
-		// 脥卢脰脰脜脝碌脛脮脜脢媒拢篓脫脨露脿脡脵赂枚碌楼脮脜隆垄露脭脳脫隆垄脠媒脤玫隆垄脣脛脤玫拢漏
+		// 同种牌的张数（有多少个单张、对子、三条、四条）
 		short countOfCount[5] = {};
 
 		cards = vector<Card>(begin, end);
@@ -166,11 +166,11 @@ struct CardCombo
 			}
 		sort(packs.begin(), packs.end());
 
-		// 脫脙脳卯露脿碌脛脛脟脰脰脜脝脳脺脢脟驴脡脪脭卤脠陆脧麓贸脨隆碌脛
+		// 用最多的那种牌总是可以比较大小的
 		comboLevel = packs[0].level;
 
-		// 录脝脣茫脜脝脨脥
-		// 掳麓脮脮 脥卢脰脰脜脝碌脛脮脜脢媒 脫脨录赂脰脰 陆酶脨脨路脰脌脿
+		// 计算牌型
+		// 按照 同种牌的张数 有几种 进行分类
 		vector<int> kindOfCountOfCount;
 		for (int i = 0; i <= 4; i++)
 			if (countOfCount[i])
@@ -181,12 +181,12 @@ struct CardCombo
 
 		switch (kindOfCountOfCount.size())
 		{
-		case 1: // 脰禄脫脨脪禄脌脿脜脝
+		case 1: // 只有一类牌
 			curr = countOfCount[kindOfCountOfCount[0]];
 			switch (kindOfCountOfCount[0])
 			{
 			case 1:
-				// 脰禄脫脨脠么赂脡碌楼脮脜
+				// 只有若干单张
 				if (curr == 1)
 				{
 					comboType = CardComboType::SINGLE;
@@ -205,7 +205,7 @@ struct CardCombo
 				}
 				break;
 			case 2:
-				// 脰禄脫脨脠么赂脡露脭脳脫
+				// 只有若干对子
 				if (curr == 1)
 				{
 					comboType = CardComboType::PAIR;
@@ -219,7 +219,7 @@ struct CardCombo
 				}
 				break;
 			case 3:
-				// 脰禄脫脨脠么赂脡脠媒脤玫
+				// 只有若干三条
 				if (curr == 1)
 				{
 					comboType = CardComboType::TRIPLET;
@@ -233,7 +233,7 @@ struct CardCombo
 				}
 				break;
 			case 4:
-				// 脰禄脫脨脠么赂脡脣脛脤玫
+				// 只有若干四条
 				if (curr == 1)
 				{
 					comboType = CardComboType::BOMB;
@@ -247,15 +247,15 @@ struct CardCombo
 				}
 			}
 			break;
-		case 2: // 脫脨脕陆脌脿脜脝
+		case 2: // 有两类牌
 			curr = countOfCount[kindOfCountOfCount[1]];
 			lesser = countOfCount[kindOfCountOfCount[0]];
 			if (kindOfCountOfCount[1] == 3)
 			{
-				// 脠媒脤玫麓酶拢驴
+				// 三条带？
 				if (kindOfCountOfCount[0] == 1)
 				{
-					// 脠媒麓酶脪禄
+					// 三带一
 					if (curr == 1 && lesser == 1)
 					{
 						comboType = CardComboType::TRIPLET1;
@@ -270,7 +270,7 @@ struct CardCombo
 				}
 				if (kindOfCountOfCount[0] == 2)
 				{
-					// 脠媒麓酶露镁
+					// 三带二
 					if (curr == 1 && lesser == 1)
 					{
 						comboType = CardComboType::TRIPLET2;
@@ -286,10 +286,10 @@ struct CardCombo
 			}
 			if (kindOfCountOfCount[1] == 4)
 			{
-				// 脣脛脤玫麓酶拢驴
+				// 四条带？
 				if (kindOfCountOfCount[0] == 1)
 				{
-					// 脣脛脤玫麓酶脕陆脰禄 * n
+					// 四条带两只 * n
 					if (curr == 1 && lesser == 2)
 					{
 						comboType = CardComboType::QUADRUPLE2;
@@ -304,7 +304,7 @@ struct CardCombo
 				}
 				if (kindOfCountOfCount[0] == 2)
 				{
-					// 脣脛脤玫麓酶脕陆露脭 * n
+					// 四条带两对 * n
 					if (curr == 1 && lesser == 2)
 					{
 						comboType = CardComboType::QUADRUPLE4;
@@ -324,7 +324,7 @@ struct CardCombo
 	}
 
 	/**
-	* 脜脨露脧脰赂露篓脜脝脳茅脛脺路帽麓贸鹿媒碌卤脟掳脜脝脳茅拢篓脮芒赂枚潞炉脢媒虏禄驴录脗脟鹿媒脜脝碌脛脟茅驴枚拢隆拢漏
+	* 判断指定牌组能否大过当前牌组（这个函数不考虑过牌的情况！）
 	*/
 	bool canBeBeatenBy(const CardCombo &b) const
 	{
@@ -349,37 +349,37 @@ struct CardCombo
 	void debugPrint()
 	{
 #ifndef _BOTZONE_ONLINE
-		std::cout << "隆戮" << cardComboStrings[(int)comboType] << "鹿虏" << cards.size() << "脮脜拢卢麓贸脨隆脨貌" << comboLevel << "隆驴";
+		std::cout << "【" << cardComboStrings[(int)comboType] << "共" << cards.size() << "张，大小序" << comboLevel << "】";
 #endif
 	}
 };
 
-/* 脳麓脤卢 */
-// 脦脪碌脛脜脝脫脨脛脛脨漏
+/* 状态 */
+// 我的牌有哪些
 set<Card> myCards;
-// 碌脴脰梅脙梅脢戮碌脛脜脝脫脨脛脛脨漏
+// 地主明示的牌有哪些
 set<Card> landlordPublicCards;
-// 麓贸录脪麓脫脳卯驴陋脢录碌陆脧脰脭脷露录鲁枚鹿媒脢虏脙麓
+// 大家从最开始到现在都出过什么
 vector<vector<Card>> whatTheyPlayed[PLAYER_COUNT];
-// 碌卤脟掳脪陋鲁枚碌脛脜脝脨猫脪陋麓贸鹿媒脣颅
+// 当前要出的牌需要大过谁
 CardCombo lastValidCombo;
-// 碌卤脟掳脪陋麓贸鹿媒碌脛脜脝脢脟脣颅鲁枚碌脛 
+// 当前要大过的牌是谁出的 
 int lastPosition=-1;
-// 麓贸录脪禄鹿脢拢露脿脡脵脜脝
+// 大家还剩多少牌
 short cardRemaining[PLAYER_COUNT] = {17, 17, 17};
-// 脦脪脢脟录赂潞脜脥忙录脪拢篓0-碌脴脰梅拢卢1-脜漏脙帽录脳拢卢2-脜漏脙帽脪脪拢漏
+// 我是几号玩家（0-地主，1-农民甲，2-农民乙）
 int myPosition;
-// 碌脴脰梅脦禄脰脙
+// 地主位置
 int landlordPosition = -1;
-// 碌脴脰梅陆脨路脰
+// 地主叫分
 int landlordBid = -1;
-// 陆脳露脦
+// 阶段
 Stage stage = Stage::BIDDING;
 
-// 脳脭录潞碌脛碌脷脪禄禄脴潞脧脢脮碌陆碌脛陆脨路脰戮枚虏脽
+// 自己的第一回合收到的叫分决策
 vector<int> bidInput;
 
-//脮芒虏驴路脰脫脙脫脷陆脨路脰脢卤驴脤碌脛戮枚虏脽隆拢
+//这部分用于叫分时刻的决策。
 namespace Envaluator_inital{
 	
 	bool initized=false;
@@ -397,7 +397,7 @@ namespace Envaluator_inital{
 	int Punish[50005];
 	const int min_straight_len[]={
 		0,5,3,2
-	};//脣鲁脳脫脳卯脨隆碌脛鲁陇露脠
+	};//顺子最小的长度
 	
 	int F(int level){
 		return (int)(pow(1.37,level));
@@ -441,7 +441,7 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::ROCKET)
 				temp.push_back(800);
 		}
-		int result=-pow(2,2.5*temp.size()/2); /*鲁枚脜脝麓脦脢媒鹿媒露脿脫脨鲁脥路拢*/
+		int result=-pow(2,2.5*temp.size()/2); /*出牌次数过多有惩罚*/
 		for (auto i:temp) result+=i-Punish[i];
 		if (Combos.size()>=1){
 			int lv=0;
@@ -478,7 +478,7 @@ namespace Envaluator_inital{
 		return 1;
 	}
 	
-	//脤掳脨脛麓娄脌铆脠媒麓酶脪禄拢卢脠媒麓酶露镁碌脛脟茅驴枚
+	//贪心处理三带一，三带二的情况
 	void Update(vector<MyCardCombo> Combos,int SANDAI1,int SIDAI1,int BOMB){
 		//cout<<"Update"<<' '<<SANDAI1<<' '<<SIDAI1<<endl;
 		//static 
@@ -518,9 +518,9 @@ namespace Envaluator_inital{
 		
 		//cout<<"UpdateE"<<' '<<SANDAI1<<' '<<SIDAI1<<endl;
 	}
-	//脮芒脌茂脦脪脙脟脠脧脦陋脦脪脙脟虏禄禄谩脤脴卤冒碌脛脜路禄脢拢卢脩隆碌陆潞陆脤矛路脡禄煤 脮芒脌茂脩隆脭帽虏禄脜脨隆拢
-	//脤谩脠隆鲁枚脌麓脙禄脫脨straight碌脛脜脝脨脥潞脜
-	//脮芒脌茂脦脪脙脟脠脧脦陋虏禄禄谩虏冒碌么脨脦脠莽 222 碌脛脜脝脨脥
+	//这里我们认为我们不会特别的欧皇，选到航天飞机 这里选择不判。
+	//提取出来没有straight的牌型号
+	//这里我们认为不会拆掉形如 222 的牌型
 	void no_straight(vector<MyCardCombo> Combos){
 		//cout<<"no_Str"<<endl;
 		for (int i=0;i<=4;i++)
@@ -545,7 +545,7 @@ namespace Envaluator_inital{
 					Combos.push_back((MyCardCombo){CardComboType::BOMB,i,-1});
 					break;
 			}
-		//脥玫脮篓
+		//王炸
 		if (level_num[13]&&level_num[14]){
 			Combos.pop_back();
 			Combos.pop_back();
@@ -564,7 +564,7 @@ namespace Envaluator_inital{
 		//cout<<"no_StrE"<<endl;
 	}
 	void dfs_straight(int,int,vector<MyCardCombo>);
-	//路脡禄煤鲁谩掳貌
+	//飞机翅膀
 	void dfs_plane(int straight_num,int straight_ind,int num,int rem,int ind,vector<MyCardCombo> Combos){
 		//cout<<"d_plane"<<endl;
 		if (!rem){
@@ -584,7 +584,7 @@ namespace Envaluator_inital{
 		}
 		//cout<<"d_planeE"<<endl;
 	}
-	//脣脩鲁枚脌麓脣霉脫脨碌脛脣鲁脳脫
+	//搜出来所有的顺子
 	void dfs_straight(int straight_num,int straight_ind,vector<MyCardCombo> Combos){
 		//cout<<straight_num<<' '<<straight_ind<<endl;
 		if (straight_num>=4)
@@ -608,28 +608,28 @@ namespace Envaluator_inital{
 				}
 				for (;;){
 					switch (straight_num){
-						//脣鲁脳脫
+						//顺子
 						case 1:
 							Combos.push_back((MyCardCombo){CardComboType::STRAIGHT,straight_ind,loc-straight_ind});
 							dfs_straight(straight_num,straight_ind,Combos);
 							Combos.pop_back();
 							break;
-						//脕卢露脭
+						//连对
 						case 2:
 							Combos.push_back((MyCardCombo){CardComboType::STRAIGHT2,straight_ind,loc-straight_ind});
 							dfs_straight(straight_num,straight_ind,Combos);
 							Combos.pop_back();
 							break;
-						//路脡禄煤
+						//飞机
 						case 3:
 							Combos.push_back((MyCardCombo){CardComboType::PLANE,straight_ind,loc-straight_ind});
 							dfs_straight(straight_num,straight_ind,Combos);
 							Combos.pop_back();
-						  //路脡禄煤脨隆鲁谩掳貌
+						  //飞机小翅膀
 						  	Combos.push_back((MyCardCombo){CardComboType::PLANE1,straight_ind,loc-straight_ind});
 						  	dfs_plane(straight_num,straight_ind,1,loc-straight_ind,0,Combos);
 						  	Combos.pop_back();
-						  //路脡禄煤麓贸鲁谩掳貌
+						  //飞机大翅膀
 						  	Combos.push_back((MyCardCombo){CardComboType::PLANE2,straight_ind,loc-straight_ind});
 						  	dfs_plane(straight_num,straight_ind,2,loc-straight_ind,0,Combos);
 						  	Combos.pop_back();
@@ -683,22 +683,22 @@ namespace BotzoneIO
 	using namespace std;
 	void read()
 	{
-		// 露脕脠毛脢盲脠毛拢篓脝陆脤篓脡脧碌脛脢盲脠毛脢脟碌楼脨脨拢漏
+		// 读入输入（平台上的输入是单行）
 		string line;
 		getline(cin, line);
 		Json::Value input;
 		Json::Reader reader;
 		reader.parse(line, input);
 
-		// 脢脳脧脠麓娄脌铆碌脷脪禄禄脴潞脧拢卢碌脙脰陋脳脭录潞脢脟脣颅隆垄脫脨脛脛脨漏脜脝
+		// 首先处理第一回合，得知自己是谁、有哪些牌
 		{
-			auto firstRequest = input["requests"][0u]; // 脧脗卤锚脨猫脪陋脢脟 unsigned拢卢驴脡脪脭脥篓鹿媒脭脷脢媒脳脰潞贸脙忙录脫u脌麓脳枚碌陆
+			auto firstRequest = input["requests"][0u]; // 下标需要是 unsigned，可以通过在数字后面加u来做到
 			auto own = firstRequest["own"];
 			for (unsigned i = 0; i < own.size(); i++)
 				myCards.insert(own[i].asInt());
 			if (!firstRequest["bid"].isNull())
 			{
-				// 脠莽鹿没禄鹿驴脡脪脭陆脨路脰拢卢脭貌录脟脗录陆脨路脰
+				// 如果还可以叫分，则记录叫分
 				auto bidHistory = firstRequest["bid"];
 				myPosition = bidHistory.size();
 				for (unsigned i = 0; i < bidHistory.size(); i++)
@@ -706,7 +706,7 @@ namespace BotzoneIO
 			}
 		}
 
-		// history脌茂碌脷脪禄脧卯拢篓脡脧脡脧录脪拢漏潞脥碌脷露镁脧卯拢篓脡脧录脪拢漏路脰卤冒脢脟脣颅碌脛戮枚虏脽
+		// history里第一项（上上家）和第二项（上家）分别是谁的决策
 		int whoInHistory[] = {0,0};
 		//(myPosition - 1 + PLAYER_COUNT) % PLAYER_COUNT, (myPosition - 2 + PLAYER_COUNT) % PLAYER_COUNT};
 
@@ -717,7 +717,7 @@ namespace BotzoneIO
 			auto llpublic = request["publiccard"];
 			if (!llpublic.isNull())
 			{
-				// 碌脷脪禄麓脦碌脙脰陋鹿芦鹿虏脜脝隆垄碌脴脰梅陆脨路脰潞脥碌脴脰梅脢脟脣颅
+				// 第一次得知公共牌、地主叫分和地主是谁
 				landlordPosition = request["landlord"].asInt();
 				landlordBid = request["finalbid"].asInt();
 				myPosition = request["pos"].asInt();
@@ -734,26 +734,26 @@ namespace BotzoneIO
 				}
 			}
 
-			auto history = request["history"]; // 脙驴赂枚脌煤脢路脰脨脫脨脡脧录脪潞脥脡脧脡脧录脪鲁枚碌脛脜脝
+			auto history = request["history"]; // 每个历史中有上家和上上家出的牌
 			if (history.isNull())
 				continue;
 			stage = Stage::PLAYING;
 
-			// 脰冒麓脦禄脰赂麓戮脰脙忙碌陆碌卤脟掳
+			// 逐次恢复局面到当前
 			int howManyPass = 0;
 			for (int p = 0; p < 2; p++)
 			{
-				int player = whoInHistory[p];	// 脢脟脣颅鲁枚碌脛脜脝
-				auto playerAction = history[p]; // 鲁枚碌脛脛脛脨漏脜脝
+				int player = whoInHistory[p];	// 是谁出的牌
+				auto playerAction = history[p]; // 出的哪些牌
 				//cout<<p<<' '<<player<<' '<<myPosition<<endl;
 				vector<Card> playedCards;
-				for (unsigned _ = 0; _ < playerAction.size(); _++) // 脩颅禄路脙露戮脵脮芒赂枚脠脣鲁枚碌脛脣霉脫脨脜脝
+				for (unsigned _ = 0; _ < playerAction.size(); _++) // 循环枚举这个人出的所有牌
 				{
-					int card = playerAction[_].asInt(); // 脮芒脌茂脢脟鲁枚碌脛脪禄脮脜脜脝
+					int card = playerAction[_].asInt(); // 这里是出的一张牌
 					playedCards.push_back(card);
 				}
 				//cout<<playedCards.size()<<endl;
-				whatTheyPlayed[player].push_back(playedCards); // 录脟脗录脮芒露脦脌煤脢路
+				whatTheyPlayed[player].push_back(playedCards); // 记录这段历史
 				cardRemaining[player] -= playerAction.size();
 
 				if (playerAction.size() == 0)
@@ -770,23 +770,23 @@ namespace BotzoneIO
 
 			if (i < turn - 1)
 			{
-				// 禄鹿脪陋禄脰赂麓脳脭录潞脭酶戮颅鲁枚鹿媒碌脛脜脝
-				auto playerAction = input["responses"][i]; // 鲁枚碌脛脛脛脨漏脜脝
+				// 还要恢复自己曾经出过的牌
+				auto playerAction = input["responses"][i]; // 出的哪些牌
 				vector<Card> playedCards;
-				for (unsigned _ = 0; _ < playerAction.size(); _++) // 脩颅禄路脙露戮脵脳脭录潞鲁枚碌脛脣霉脫脨脜脝
+				for (unsigned _ = 0; _ < playerAction.size(); _++) // 循环枚举自己出的所有牌
 				{
-					int card = playerAction[_].asInt(); // 脮芒脌茂脢脟脳脭录潞鲁枚碌脛脪禄脮脜脜脝
-					myCards.erase(card);				// 麓脫脳脭录潞脢脰脜脝脰脨脡戮碌么
+					int card = playerAction[_].asInt(); // 这里是自己出的一张牌
+					myCards.erase(card);				// 从自己手牌中删掉
 					playedCards.push_back(card);
 				}
-				whatTheyPlayed[myPosition].push_back(playedCards); // 录脟脗录脮芒露脦脌煤脢路
+				whatTheyPlayed[myPosition].push_back(playedCards); // 记录这段历史
 				cardRemaining[myPosition] -= playerAction.size();
 			}
 		}
 	}
 
 	/**
-	* 脢盲鲁枚陆脨路脰拢篓0, 1, 2, 3 脣脛脰脰脰庐脪禄拢漏
+	* 输出叫分（0, 1, 2, 3 四种之一）
 	*/
 	void bid(int value)
 	{
@@ -798,8 +798,8 @@ namespace BotzoneIO
 	}
 
 	/**
-	* 脢盲鲁枚麓貌脜脝戮枚虏脽拢卢begin脢脟碌眉麓煤脝梅脝冒碌茫拢卢end脢脟碌眉麓煤脝梅脰脮碌茫
-	* CARD_ITERATOR脢脟Card拢篓录麓short拢漏脌脿脨脥碌脛碌眉麓煤脝梅
+	* 输出打牌决策，begin是迭代器起点，end是迭代器终点
+	* CARD_ITERATOR是Card（即short）类型的迭代器
 	*/
 	template <typename CARD_ITERATOR>
 	void play(CARD_ITERATOR begin, CARD_ITERATOR end)
@@ -840,10 +840,10 @@ namespace BotzoneIO
 namespace Legal_Move_Set{
 	const int min_straight_len[]={
 		0,5,3,2
-	};//脣鲁脳脫脳卯脨隆碌脛鲁陇露脠
+	};//顺子最小的长度
 	vector<Card> op[20];
 	vector<CardCombo> Legal_move;
-	//脮脪脣霉脫脨驴脡脪脭碌脛麓酶碌脛路陆掳赂
+	//找所有可以的带的方案
 	void Update(vector<Card> combo,int banl,int banr,int rem,int num,int ind=0){
 		if (!rem){
 			Legal_move.push_back(CardCombo(combo.begin(),combo.end()));
@@ -859,7 +859,7 @@ namespace Legal_Move_Set{
 			++ind;
 		}
 	}
-	//脮脪碌陆脣霉脫脨潞脧路篓碌脛虏脵脳梅
+	//找到所有合法的操作
 	vector<CardCombo> find_legal_move(set<Card> S,CardCombo pre_move){
 		for (Level i=0;i<=14;i++)
 			op[i].resize(0);
@@ -872,22 +872,22 @@ namespace Legal_Move_Set{
 			switch (op[i].size()){
 				case 4:
 					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+4));//bomb
-					Update(vector<Card>(op[i].begin(),op[i].begin()+4),i,i,2,1);//脣脛+脕陆赂枚
-					Update(vector<Card>(op[i].begin(),op[i].begin()+4),i,i,2,2);//脣脛麓酶脕陆露脭
+					Update(vector<Card>(op[i].begin(),op[i].begin()+4),i,i,2,1);//四+两个
+					Update(vector<Card>(op[i].begin(),op[i].begin()+4),i,i,2,2);//四带两对
 				case 3:
-					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+3));//脠媒麓酶脕茫
-					Update(vector<Card>(op[i].begin(),op[i].begin()+3),i,i,1,1);//脠媒麓酶脪禄
-					Update(vector<Card>(op[i].begin(),op[i].begin()+3),i,i,1,2);//脠媒麓酶露酶
+					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+3));//三带零
+					Update(vector<Card>(op[i].begin(),op[i].begin()+3),i,i,1,1);//三带一
+					Update(vector<Card>(op[i].begin(),op[i].begin()+3),i,i,1,2);//三带而
 				case 2:
-					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+2));//露脭脳脫
+					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+2));//对子
 				case 1:
-					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+1));//碌楼脮脜
+					Legal_move.push_back(CardCombo(op[i].begin(),op[i].begin()+1));//单张
 				case 0:
 					break;
 			}
 		if (op[13].size()&&op[14].size()){
 			vector<Card> combo={52,53};
-			Legal_move.push_back(CardCombo(combo.begin(),combo.end()));//脥玫脮篓
+			Legal_move.push_back(CardCombo(combo.begin(),combo.end()));//王炸
 		}
 		//cout<<"P2.2"<<endl;
 		for (int straight_num=1;straight_num<=3;++straight_num)
@@ -901,10 +901,10 @@ namespace Legal_Move_Set{
 					else avaliable=0;
 				for (;avaliable;){
 					//cout<<l<<' '<<loc<<' '<<straight_num<<endl;
-					Legal_move.push_back(CardCombo(combo.begin(),combo.end()));//脣鲁脳脫
+					Legal_move.push_back(CardCombo(combo.begin(),combo.end()));//顺子
 					if (straight_num==3){
 						Update(combo,l,loc-1,loc-l,1);
-						Update(combo,l,loc-1,loc-l,2);//路脡禄煤
+						Update(combo,l,loc-1,loc-l,2);//飞机
 					}
 					if (loc>11||op[loc].size()<straight_num) break;
 					for (int j=0;j<straight_num;j++) combo.push_back(op[loc][j]);
@@ -933,14 +933,14 @@ namespace Mid_envaluate{
 	int Scoreing(multiset<Card> S){
 		return Envaluator_inital::envaluate_ver_temp(S);
 	}
-	//赂酶脪禄赂枚鲁枚脜脝脜脝脳茅拢卢脟贸脣没碌脛碌脙路脰
+	//给一个出牌牌组，求他的得分
 	int F(int level){
 		return (int)(pow(1.37,level));
 	}
 	int G(int len){
 		return max(len*2,(int)(pow(1.58,len)));
 	}
-	double Comboscore(CardCombo op){
+	double Comboscore_Inside(CardCombo op){
 		int score=0;
 		int ComboLevel=op.comboLevel;
 		int Combolen=op.cards.size();
@@ -995,14 +995,29 @@ namespace Mid_envaluate{
 				score=800;
 				break;
 			default:
-				//脌铆脗脹脡脧虏禄禄谩鲁枚脧脰脭脷脮芒脌茂
+				//理论上不会出现在这里
+				//
 				return 0;
 		}
-		return score+pow(max(0.1,1.0*(2000-score)),0.7);
+		return score;
+		//return score+pow(max(0.1,1.0*(2000-score)),0.7);
+	}
+	double Comboscore(CardCombo Mymove){
+		if (Mymove.comboType==CardComboType::PASS)
+			return Comboscore_Inside(Mymove);
+		if (lastValidCombo.comboType==CardComboType::PASS){
+			double score=Comboscore_Inside(Mymove);
+			return score+pow(max(0.1,1.0*(2000-score)),0.7);
+		}
+		double scoreMy=Comboscore_Inside(Mymove);
+		double scorePass=Comboscore_Inside(lastValidCombo);
+		double Punish=max(0.0,scorePass-scoreMy);
+		Punish=Punish*(1.0-pow(0.996,Punish));
+		return scoreMy+pow(max(0.1,1.0*(2000-scoreMy)),0.7)/*出牌难易程度加分*/-Punish;
 	}
 	double Score2prob(double score){
 		return exp(score/1500.0);
-	}//赂酶路脰脰脦鹿脌录脝鲁枚脧脰脧脿露脭赂脜脗脢
+	}//给分治估计出现相对概率
 	double envaluate(multiset<Card> S0,multiset<Card> S1,multiset<Card> S2,CardCombo combo){
 		#ifdef zyy
 			cout<<"Cards:"<<' '<<S0.size()<<' '<<S1.size()<<' '<<S2.size()<<endl;
@@ -1037,10 +1052,10 @@ namespace Mid_envaluate{
 	}
 }
 namespace Action{
-	int other_remain[20];//鲁媒脠楼碌脴脰梅脪脩戮颅鲁枚碌么碌脛脜脝拢卢脕陆赂枚脥忙录脪脳脺鹿虏脢拢脫脿碌脛脜脝脢媒
-	set<Card> LordPublicCards;//掳脩碌脴脰梅脪脩戮颅鲁枚碌么碌脛脜脝拢卢脪脩脰陋碌脛脭脷碌脴脰梅脢脰脌茂碌脛脜脝
+	int other_remain[20];//除去地主已经出掉的牌，两个玩家总共剩余的牌数
+	set<Card> LordPublicCards;//把地主已经出掉的牌，已知的在地主手里的牌
 	vector<CardCombo> Valid;
-	//脣忙禄煤脢媒脳脰脡煤鲁脡脝梅
+	//随机数字生成器
 	struct MyRandomizer{
 		unsigned long long seed;
 		MyRandomizer(){
@@ -1054,8 +1069,8 @@ namespace Action{
 		}
 	}Rnd;
 	
-	//虏脗虏芒脪禄脰脰驴脡脛脺碌脛戮脰脙忙
-	//路脰鲁脡碌脴脰梅/脜漏脙帽A/脜漏脙帽B
+	//猜测一种可能的局面
+	//分成地主/农民A/农民B
 	void Split_Card(multiset<Card> &S0,multiset<Card> &S1,multiset<Card> &S2){
 		S0.clear(); S1.clear(); S2.clear();
 		vector<Card> temp;
@@ -1099,7 +1114,7 @@ namespace Action{
 		}
 	}
 	
-	//脮脪虏脵脳梅
+	//找操作
 	CardCombo findAction(){
 		for (int i=0;i<=12;i++) other_remain[i]=4;
 		other_remain[13]=other_remain[14]=1;
@@ -1113,7 +1128,7 @@ namespace Action{
 					if (LordPublicCards.find(k)!=LordPublicCards.end())
 						LordPublicCards.erase(k);
 				}
-		if (myPosition!=0)//虏禄脢脟碌脴脰梅
+		if (myPosition!=0)//不是地主
 			for (auto i:LordPublicCards)
 				other_remain[card2level(i)]--;
 			
@@ -1122,9 +1137,9 @@ namespace Action{
 		//	cout<<other_remain[i]<<' '; cout<<endl;
 		Valid=Legal_Move_Set::find_legal_move(myCards,lastValidCombo);
 		//cout<<"P3"<<endl;
-		if (Valid.size()==0) return CardCombo(-1,-1);//脪陋虏禄脝冒
+		if (Valid.size()==0) return CardCombo(-1,-1);//要不起
 		if (lastValidCombo.comboType!=CardComboType::PASS)
-			Valid.push_back(CardCombo(-1,-1));//鹿媒
+			Valid.push_back(CardCombo(-1,-1));//过
 		//cout<<"P4"<<endl;
 		vector<double> score;
 		score.resize(Valid.size());
@@ -1178,14 +1193,14 @@ namespace Action{
 		return Valid[max_element(score.begin(),score.end())-score.begin()];
 		/*
 		Todo List
-		赂酶脪禄赂枚脰脨脜脤碌脛戮脰脙忙拢卢录脝脣茫脝盲碌脙路脰/赂酶鲁枚脝盲鹿脌录脹
+		给一个中盘的局面，计算其得分/给出其估价
 		*/
 	}
 }
 
-//陆脨路脰陆脳露脦碌脛虏脦脢媒
-//脠莽鹿没碌脙路脰赂脽脫脷constant[3]陆脨3路脰,...,脪脌麓脦脌脿脥脝
-//脮芒虏驴路脰脙禄脨麓
+//叫分阶段的参数
+//如果得分高于constant[3]叫3分,...,依次类推
+//这部分没写
 const int constant[4]={-1,-1,-1,-1};
 
 const int constantv[5]={0,1000,2000,3000,0}; 
@@ -1201,7 +1216,7 @@ int main(){
 	if (stage == Stage::BIDDING)
 	{
 		// cout<<"GGMYFRIEND"<<endl;
-		// 脳枚鲁枚戮枚虏脽拢篓脛茫脰禄脨猫脨脼赂脛脪脭脧脗虏驴路脰拢漏
+		// 做出决策（你只需修改以下部分）
 
 		auto maxBidIt = std::max_element(bidInput.begin(), bidInput.end());
 		int maxBid = (maxBidIt == bidInput.end() ? -1 : *maxBidIt);
@@ -1213,25 +1228,25 @@ int main(){
 				if (i>maxBid){
 					bidValue=i;
 				}
-		// 戮枚虏脽陆谩脢酶拢卢脢盲鲁枚陆谩鹿没拢篓脛茫脰禄脨猫脨脼赂脛脪脭脡脧虏驴路脰拢漏
+		// 决策结束，输出结果（你只需修改以上部分）
 
 		BotzoneIO::bid(bidValue);
 	}
 	else if (stage == Stage::PLAYING)
 	{
-		// 脳枚鲁枚戮枚虏脽拢篓脛茫脰禄脨猫脨脼赂脛脪脭脧脗虏驴路脰拢漏
-		// findFirstValid 潞炉脢媒驴脡脪脭脫脙脳梅脨脼赂脛碌脛脝冒碌茫
+		// 做出决策（你只需修改以下部分）
+		// findFirstValid 函数可以用作修改的起点
 		CardCombo myAction = Action::findAction();
-		// 脢脟潞脧路篓脜脝
+		// 是合法牌
 		assert(myAction.comboType != CardComboType::INVALID);
 		assert(
-			// 脭脷脡脧录脪脙禄鹿媒脜脝碌脛脢卤潞貌鹿媒脜脝
+			// 在上家没过牌的时候过牌
 			(lastValidCombo.comboType != CardComboType::PASS && myAction.comboType == CardComboType::PASS) ||
-			// 脭脷脡脧录脪脙禄鹿媒脜脝碌脛脢卤潞貌鲁枚麓貌碌脙鹿媒碌脛脜脝
+			// 在上家没过牌的时候出打得过的牌
 			(lastValidCombo.comboType != CardComboType::PASS && lastValidCombo.canBeBeatenBy(myAction)) ||
-			// 脭脷脡脧录脪鹿媒脜脝碌脛脢卤潞貌鲁枚潞脧路篓脜脝
+			// 在上家过牌的时候出合法牌
 			(lastValidCombo.comboType == CardComboType::PASS && myAction.comboType != CardComboType::INVALID));
-		// 戮枚虏脽陆谩脢酶拢卢脢盲鲁枚陆谩鹿没拢篓脛茫脰禄脨猫脨脼赂脛脪脭脡脧虏驴路脰拢漏
+		// 决策结束，输出结果（你只需修改以上部分）
 		BotzoneIO::play(myAction.cards.begin(), myAction.cards.end());
 	}
 	
