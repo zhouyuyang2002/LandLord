@@ -720,7 +720,7 @@ namespace BotzoneIO
 				landlordBid = request["finalbid"].asInt();
 				myPosition = request["pos"].asInt();
 				myPosition=(myPosition-landlordPosition+PLAYER_COUNT)%PLAYER_COUNT;
-				cardRemaining[landlordPosition] += llpublic.size();
+				cardRemaining[0] += llpublic.size();
 				whoInHistory[0] = (myPosition - 2 + PLAYER_COUNT) % PLAYER_COUNT;
 				whoInHistory[1] = (myPosition - 1 + PLAYER_COUNT) % PLAYER_COUNT;
 
