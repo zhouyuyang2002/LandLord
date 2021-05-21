@@ -727,7 +727,7 @@ namespace BotzoneIO
 				for (unsigned i = 0; i < llpublic.size(); i++)
 				{
 					landlordPublicCards.insert(llpublic[i].asInt());
-					if (landlordPosition == myPosition)
+					if (0 == myPosition)
 						myCards.insert(llpublic[i].asInt());
 				}
 			}
