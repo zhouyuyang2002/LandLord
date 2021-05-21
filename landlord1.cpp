@@ -401,7 +401,10 @@ namespace Envaluator_inital{
 		return (int)(pow(1.37,level));
 	}
 	int G(int len){
-		return (int)(pow(1.22,len)+0.5);
+		return max(len*2,(int)(pow(1.58,len)));
+	}
+	int H(int level){
+		return max((15-level)*2,(int)(pow(1.37,15-level)));
 	}
 	int Scoreing(vector<MyCardCombo> Combos){
 		int ans=0;
@@ -436,10 +439,19 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::ROCKET)
 				temp.push_back(800);
 		}
-		int result=-pow(2,3.0*temp.size()/2); /*出牌次数过多有惩罚*/
+		int result=-pow(2,2.5*temp.size()/2); /*出牌次数过多有惩罚*/
 		for (auto i:temp) result+=i-Punish[i];
-		/*if (result==2240){
-			cout<<"1145141919810"<<endl;
+		if (Combos.size()>=1){
+			int lv=0;
+			for (auto i:Combos)
+				lv=max(lv,(int)i.ComboLevel);
+			//cout<<lv<<endl;
+			result-=H(lv);
+		}
+		/*static int fir=0;
+		if (fir==0){
+			fir=1;
+			cout<<"1145141919810"<<' '<<result<<endl;
 			for (auto i:Combos) cout<<cardComboStrings[(int)i.ComboType]<<' '<<i.ComboLevel<<' '<<endl; 
 			
 		}*/
@@ -920,7 +932,7 @@ namespace Mid_envaluate{
 		return (int)(pow(1.37,level));
 	}
 	int G(int len){
-		return (int)(pow(1.22,len)+0.5);
+		return max(len*2,(int)(pow(1.58,len)));
 	}
 	double Comboscore(CardCombo op){
 		int score=0;
@@ -980,19 +992,19 @@ namespace Mid_envaluate{
 				//理论上不会出现在这里
 				return 0;
 		}
-		return score+pow(max(0.1,1.0*(2000-score)),0.5);
+		return score+pow(max(0.1,1.0*(2000-score)),0.7);
 	}
 	double Score2prob(double score){
 		return exp(score/1500.0);
 	}//给分治估计出现相对概率
 	double envaluate(multiset<Card> S0,multiset<Card> S1,multiset<Card> S2,CardCombo combo){
-		/*#ifdef zyy
+		#ifdef zyy
 			cout<<"Cards:"<<' '<<S0.size()<<' '<<S1.size()<<' '<<S2.size()<<endl;
 			cout<<cardRemaining[0]<<' '<<cardRemaining[1]<<' '<<cardRemaining[2]<<endl;
 			for (auto i:S0) cout<<i<<' '; cout<<endl;
 			for (auto i:S1) cout<<i<<' '; cout<<endl;
 			for (auto i:S2) cout<<i<<' '; cout<<endl;
-		#endif*/
+		#endif
 		memset(card_rem,0,sizeof(card_rem));
 		for (auto i:S0) ++card_rem[0][i];
 		for (auto i:S1) ++card_rem[1][i];
@@ -1002,9 +1014,15 @@ namespace Mid_envaluate{
 		double score1=Scoreing(S1);
 		double score2=Scoreing(S2);
 		double score;
-		if (myPosition!=0) score=max(score1,score2)*0.6+min(score1,score2)*0.4-score0;
-		else score=score0-max(score1,score2)*0.6-min(score1,score2)*0.4;
-		//cout<<Comboscore(combo)<<' '<<score<<' '<<score0<<' '<<score1<<' '<<score2<<endl;
+		if (myPosition==0) score=score0-max(score1,score2)*0.55-min(score1,score2)*0.5;
+		if (myPosition==1) score=score1*0.95+score2*0.05-score0;
+		if (myPosition==2) score=score2*0.95+score1*0.05-score0;
+
+		
+		#ifdef zyy
+			cout<<Comboscore(combo)<<' '<<score<<' '<<score0<<' '<<score1<<' '<<score2<<endl;
+		#endif
+		score+=Comboscore(combo);
 		if (myPosition!=0) score*=Score2prob(score0);
 		if (myPosition!=1) score*=Score2prob(score1);
 		if (myPosition!=2) score*=Score2prob(score2);
@@ -1104,7 +1122,8 @@ namespace Action{
 		vector<double> score;
 		score.resize(Valid.size());
 		int play_round=0;
-		for (;clock()<=0.8*CLOCKS_PER_SEC;){
+		//#ifdef zyy
+		for (;clock()<=0.7*CLOCKS_PER_SEC;){
 			multiset<Card> Player0,Player1,Player2;
 			Split_Card(Player0,Player1,Player2);
 			int index=0;
@@ -1131,6 +1150,7 @@ namespace Action{
 				index++;
 			}
 			play_round++;
+			//cerr<<clock()<<endl; 
 		}
 		int index=0;
 		for (auto combo:Valid){
