@@ -1354,7 +1354,7 @@ namespace Action{
 //?????
 const int constant[4]={-1,-1,-1,-1};
 
-const int constantv[5]={0,1000,2000,3000,0}; 
+const int constantv[5]={0,-50,250,400,0};
 int main(){
 	#ifdef zyy
 		freopen("1.in","r",stdin);
