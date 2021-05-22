@@ -441,7 +441,9 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::ROCKET)
 				temp.push_back(800);
 		}
-		int result=-pow(2,2.5*temp.size()/2); /*出牌次数过多有惩罚*/
+		//
+		int result=-100*(int)temp.size()*pow(0.88,temp.size()); /*出牌次数过多有惩罚*/
+		result-=40*temp.size();
 		for (auto i:temp) result+=i-Punish[i];
 		if (Combos.size()>=1){
 			int lv=0;
@@ -450,8 +452,8 @@ namespace Envaluator_inital{
 			//cout<<lv<<endl;
 			result-=H(lv);
 		}
-		/*static int fir=0;
-		if (fir==0){
+		static int fir=0;
+		/*if (result>=223){
 			fir=1;
 			cout<<"1145141919810"<<' '<<result<<endl;
 			for (auto i:Combos) cout<<cardComboStrings[(int)i.ComboType]<<' '<<i.ComboLevel<<' '<<endl; 
@@ -462,7 +464,11 @@ namespace Envaluator_inital{
 	
 	bool Legal_2(int ned){
 		if (CopyCombo[2].size()<ned) return 0;
-		for (;ned;CopyCombo[2].erase(CopyCombo[2].begin()),--ned);
+		for (;ned;){
+			//cout<<"Erased "<<*CopyCombo[2].begin()<<endl;
+			CopyCombo[2].erase(CopyCombo[2].begin());
+			--ned;
+		}
 		return 1;
 	}
 	bool Legal_1(int ned){
@@ -1012,10 +1018,11 @@ namespace Mid_envaluate{
 		double scoreMy=Comboscore_Inside(Mymove);
 		double scorePass=Comboscore_Inside(lastValidCombo);
 		double Punish=max(0.0,scoreMy-scorePass);
-		Punish=Punish*min(0.06*Punish,pow(1.029,Punish)-1);
+		Punish=min(pow(Punish,0.93),Punish*(pow(1.029,Punish)-1));
 		//cout<<"scoreMy: "<<scoreMy<<"scorePass: "<<scorePass<<' '<<Punish<<endl;
 		if ((lastPosition>0)&&(myPosition>0)) Punish=Punish*10;
-		else if ((lastPosition!=0)^(myPosition!=0)) Punish=Punish*0.1;
+		else if ((lastPosition!=0)^(myPosition!=0)) Punish=Punish*0.3;
+		//cout<<"scoreMy: "<<scoreMy<<"scorePass: "<<scorePass<<' '<<Punish<<endl;
 		return scoreMy+pow(max(0.1,1.0*(2000-scoreMy)),0.7)/*出牌难易程度加分*/-Punish;
 	}
 	double Score2prob(double score){
@@ -1148,7 +1155,7 @@ namespace Action{
 		score.resize(Valid.size());
 		int play_round=0;
 		//#ifdef zyy
-		//for (;clock()<=0.7*CLOCKS_PER_SEC;)
+		for (;clock()<=0.7*CLOCKS_PER_SEC;)
 		{
 			multiset<Card> Player0,Player1,Player2;
 			Split_Card(Player0,Player1,Player2);
@@ -1179,12 +1186,12 @@ namespace Action{
 			//cerr<<clock()<<endl; 
 		}
 		int index=0;
-		for (auto combo:Valid){
+		/*for (auto combo:Valid){
 		//	cerr<<score[index]<<" ";
-			score[index]+=play_round*combo.cards.size()*50;
+			score[index]+=play_round*combo.cards.size()*20;
 		//	cerr<<score[index]<<endl;
 			index++;
-		}
+		}*/
 		#ifdef zyy
 			cout<<"Round Played:"<<play_round<<endl;
 			for (int i=0;i<score.size();i++){
