@@ -400,10 +400,10 @@ namespace Envaluator_inital{
 	};//???????
 	
 	int F(int level){
-		return (int)(pow(1.37,level));
+		return (int)(1.1*pow(1.44,level));
 	}
 	int G(int len){
-		return max(len*2,(int)(pow(1.58,len)));
+		return pow(100,1.0-1.0/max(2.0,len-1.0));
 	}
 	int H(int level){
 		return max((15-level)*2,(int)(pow(1.37,15-level)));
@@ -417,21 +417,21 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::PAIR)
 				temp.push_back(3+3*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::STRAIGHT)
-				temp.push_back(1+6*F(i.ComboLevel)+3*G(i.Combolen));
+				temp.push_back(1+6*F(i.ComboLevel-i.Combolen+1)+3*G(i.Combolen));
 			if (i.ComboType==CardComboType::STRAIGHT2)
-				temp.push_back(1+6*F(i.ComboLevel)+5*G(i.Combolen));
+				temp.push_back(1+6*F(i.ComboLevel-i.Combolen+1)+5*G(i.Combolen));
 			if (i.ComboType==CardComboType::TRIPLET)
-				temp.push_back(8+8*F(i.ComboLevel));
+				temp.push_back(18+5*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::TRIPLET1)
-				temp.push_back(12+8*F(i.ComboLevel));
+				temp.push_back(32+5*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::TRIPLET2)
-				temp.push_back(18+8*F(i.ComboLevel));
+				temp.push_back(38+5*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::BOMB)
-				temp.push_back(250+15*F(i.ComboLevel));
+				temp.push_back(200+3*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::QUADRUPLE2)
-				temp.push_back(300+15*F(i.ComboLevel));
+				temp.push_back(200+3*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::QUADRUPLE4)
-				temp.push_back(350+15*F(i.ComboLevel));
+				temp.push_back(200+3*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::PLANE)
 				temp.push_back(1+8*G(i.Combolen)+6*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::PLANE1)
@@ -439,10 +439,10 @@ namespace Envaluator_inital{
 			if (i.ComboType==CardComboType::PLANE2)
 				temp.push_back(1+12*G(i.Combolen)+6*F(i.ComboLevel));
 			if (i.ComboType==CardComboType::ROCKET)
-				temp.push_back(800);
+				temp.push_back(300);
 		}
 		//
-		int result=-100*(int)temp.size()*pow(0.88,temp.size()); /*?????????*/
+		int result=-120*(int)temp.size()*pow(0.92,temp.size()); /*?????????*/
 		result-=40*temp.size();
 		for (auto i:temp) result+=i-Punish[i];
 		if (Combos.size()>=1){
@@ -552,11 +552,11 @@ namespace Envaluator_inital{
 					break;
 			}
 		//??
-		if (level_num[13]&&level_num[14]){
+		/*if (level_num[13]&&level_num[14]){
 			Combos.pop_back();
 			Combos.pop_back();
 			Combos.push_back((MyCardCombo){CardComboType::ROCKET,14,-1});
-		}
+		}*/
 		swap(Combo_level[0],Combo_level[2]);
 		for (;;){
 			for (int i=0;i<=Combo_level[3].size();i++)
@@ -768,6 +768,7 @@ namespace BotzoneIO
 				{ 
 					lastValidCombo = CardCombo(playedCards.begin(), playedCards.end());
 					lastPosition = player;
+					//cout<<i<<' '<<turn<<'<<233<<endl;
 				}
 			}
 
@@ -941,10 +942,13 @@ namespace Mid_envaluate{
 	}
 	//???????,?????
 	int F(int level){
-		return (int)(pow(1.37,level));
+		return (int)(1.1*pow(1.44,level));
 	}
 	int G(int len){
-		return max(len*2,(int)(pow(1.58,len)));
+		return pow(100,1.0-1.0/max(2.0,len-1.0));
+	}
+	int H(int level){
+		return max((15-level)*2,(int)(pow(1.37,15-level)));
 	}
 	double Comboscore_Inside(CardCombo op){
 		int score=0;
@@ -965,28 +969,28 @@ namespace Mid_envaluate{
 				score=3+3*F(ComboLevel);
 				break;
 			case CardComboType::STRAIGHT:
-				score=1+6*F(ComboLevel)+3*G(Combolen);
+				score=1+6*F(ComboLevel-Combolen+1)+3*G(Combolen);
 				break;
 			case CardComboType::STRAIGHT2:
-				score=1+6*F(ComboLevel)+5*G(Combolen);
+				score=1+6*F(ComboLevel-Combolen+1)+5*G(Combolen);
 				break;
 			case CardComboType::TRIPLET:
-				score=8+8*F(ComboLevel);
+				score=18+5*F(ComboLevel);
 				break; 
 			case CardComboType::TRIPLET1:
-				score=12+8*F(ComboLevel);
+				score=32+5*F(ComboLevel);
 				break;
 			case CardComboType::TRIPLET2:
-				score=18+8*F(ComboLevel);
+				score=38+5*F(ComboLevel);
 				break;
 			case CardComboType::BOMB:
-				score=250+15*F(ComboLevel);
+				score=200+3*F(ComboLevel);
 				break;
 			case CardComboType::QUADRUPLE2:
-				score=300+15*F(ComboLevel);
+				score=200+3*F(ComboLevel);
 				break;
 			case CardComboType::QUADRUPLE4:
-				score=350+15*F(ComboLevel);
+				score=200+3*F(ComboLevel);
 				break;
 			case CardComboType::PLANE:
 				score=1+6*F(ComboLevel)+8*G(Combolen);
@@ -998,7 +1002,7 @@ namespace Mid_envaluate{
 				score=1+6*F(ComboLevel)+12*G(Combolen);
 				break;
 			case CardComboType::ROCKET:
-				score=800;
+				score=300;
 				break;
 			default:
 				//??????????
@@ -1009,21 +1013,50 @@ namespace Mid_envaluate{
 		//return score+pow(max(0.1,1.0*(2000-score)),0.7);
 	}
 	double Comboscore(CardCombo Mymove){
+		int EnemyCard=1<<30;
+		for (int i=0;i<=2;i++)
+			if ((myPosition!=0)^(i!=0))
+				EnemyCard=min(EnemyCard,(int)cardRemaining[i]);
 		if (Mymove.comboType==CardComboType::PASS)
 			return Comboscore_Inside(Mymove);
 		if (lastValidCombo.comboType==CardComboType::PASS){
 			double score=Comboscore_Inside(Mymove);
-			return score+pow(max(0.1,1.0*(2000-score)),0.7);
+		#ifdef zyy
+			cout<<"scoreMy: "<<score<<endl;
+		#endif
+			return score*(pow(3,1.0/pow(EnemyCard,1.8))-0.1)+pow(max(0.1,1.0*(1000-score)),0.4+(0.38/sqrt(20))*sqrt(EnemyCard));
 		}
 		double scoreMy=Comboscore_Inside(Mymove);
 		double scorePass=Comboscore_Inside(lastValidCombo);
-		double Punish=max(0.0,scoreMy-scorePass);
-		Punish=min(pow(Punish,0.93),Punish*(pow(1.029,Punish)-1));
-		//cout<<"scoreMy: "<<scoreMy<<"scorePass: "<<scorePass<<' '<<Punish<<endl;
-		if ((lastPosition>0)&&(myPosition>0)) Punish=Punish*10;
-		else if ((lastPosition!=0)^(myPosition!=0)) Punish=Punish*0.3;
-		//cout<<"scoreMy: "<<scoreMy<<"scorePass: "<<scorePass<<' '<<Punish<<endl;
-		return scoreMy+pow(max(0.1,1.0*(2000-scoreMy)),0.7)/*????????*/-Punish;
+		double Punish1=scoreMy/max(scorePass,0.1);
+		double Punish2=max(0.0,scoreMy-scorePass);
+		double Punish=Punish2*(pow(1.1,Punish1*(1-(20-cardRemaining[myPosition])*0.049))-1);
+		if (Mymove.comboType==CardComboType::BOMB||Mymove.comboType==CardComboType::ROCKET)
+			if (myPosition>0&&lastPosition==(myPosition^3))
+				Punish+=100;
+		//Punish=pow(20,max(0.001,Punish-1));
+		if ((lastPosition==myPosition)); 
+		else if ((lastPosition>0)&&(myPosition>0)) Punish=Punish*10+scorePass;
+		else if ((lastPosition!=0)^(myPosition!=0)) Punish=Punish*0.5;
+		if (EnemyCard==1&&Mymove.comboType==CardComboType::SINGLE){
+			if (lastValidCombo.comboType==CardComboType::SINGLE){
+				if (lastPosition==0) Punish-=Mymove.comboLevel*100;
+				if (lastPosition==1) Punish-=Mymove.comboLevel*30;
+			}
+			else{
+				Punish-=Mymove.comboLevel*100;
+				Punish+=10000;
+			}
+		}
+		else if (EnemyCard==1){
+			if (lastPosition==0) Punish-=Mymove.comboLevel*100;
+			//if (lastPosition==1) Punish-=Mymove.comboLevel*30;
+		}
+		
+		#ifdef zyy
+			cout<<"scoreMy: "<<scoreMy<<"scorePass: "<<scorePass<<' '<<Punish<<endl;
+		#endif
+		return scoreMy*(pow(3,1.0/pow(EnemyCard,1.8))-0.1)+pow(max(0.1,1.0*(1000-scoreMy)),0.4+(0.38/20)*EnemyCard)/*????????*/-Punish;
 	}
 	double Score2prob(double score){
 		return exp(score/1500.0);
@@ -1053,8 +1086,7 @@ namespace Mid_envaluate{
 		#ifdef zyy
 			cout<<Comboscore(combo)<<' '<<score<<' '<<score0<<' '<<score1<<' '<<score2<<endl;
 		#endif
-		if (lastPosition==-1) score+=0.1*Comboscore(combo);
-		else score+=Comboscore(combo);
+		score+=Comboscore(combo);
 		if (myPosition!=0) score*=Score2prob(score0);
 		if (myPosition!=1) score*=Score2prob(score1);
 		if (myPosition!=2) score*=Score2prob(score2);
@@ -1260,8 +1292,32 @@ namespace Action{
 		}
 	}
 	
+	bool CantWin(){
+		set<Card> temp=LordPublicCards;
+		for (int i=0;i<=14;i++){
+			int x=i*4+(i==14?-3:0);
+			for (int j=0;j<other_remain[i];j++){
+				for (;temp.find(x)!=temp.end();++x);
+				temp.insert(x++);
+			}
+		}
+		//for (auto i:temp) cout<<i<<endl;
+		set<Card> ttemp=temp;
+		for (auto i:temp) if (LordPublicCards.find(i)==LordPublicCards.end()){
+			ttemp.erase(i);
+			if (Legal_Move_Set::find_legal_move(ttemp,lastValidCombo).size()) return 0;
+			ttemp.insert(i);
+		}
+		return 1;
+	}
+	
 	//???
 	CardCombo findAction(){
+		if (myPosition == 1)
+			if (lastPosition == 2)
+				if (cardRemaining[2] == 1)
+					return CardCombo(-1,-1);
+					//队友牛逼
 		for (int i=0;i<=12;i++) other_remain[i]=4;
 		other_remain[13]=other_remain[14]=1;
 		for (auto i:myCards) other_remain[card2level(i)]--;
@@ -1287,6 +1343,13 @@ namespace Action{
 		
 		CardCombo now=Check_Win::Check_Win(myCards,Valid);
 		if (now.comboType!=CardComboType::PASS) return now;
+		
+		//cout<<myPosition<<' '<<lastPosition<<' '<<endl;
+		if (myPosition!=0)
+			if (lastPosition!=0&&lastPosition!=myPosition)
+				if (cardRemaining[lastPosition]==1&&CantWin())
+					return CardCombo(-1,-1);
+					//队友牛逼
 		
 		if (lastValidCombo.comboType!=CardComboType::PASS)
 			Valid.push_back(CardCombo(-1,-1));//?
@@ -1326,12 +1389,12 @@ namespace Action{
 			//cerr<<clock()<<endl; 
 		}
 		int index=0;
-		/*for (auto combo:Valid){
+		for (auto combo:Valid){
 		//	cerr<<score[index]<<" ";
-			score[index]+=play_round*combo.cards.size()*20;
+			score[index]+=play_round*combo.cards.size()*5;
 		//	cerr<<score[index]<<endl;
 			index++;
-		}*/
+		}
 		#ifdef zyy
 			cout<<"Round Played:"<<play_round<<endl;
 			for (int i=0;i<score.size();i++){
@@ -1354,7 +1417,7 @@ namespace Action{
 //?????
 const int constant[4]={-1,-1,-1,-1};
 
-const int constantv[5]={0,-50,250,400,0};
+const int constantv[5]={0,-100,200,350,0};
 int main(){
 	#ifdef zyy
 		freopen("1.in","r",stdin);
@@ -1364,6 +1427,8 @@ int main(){
 	srand(time(nullptr));
 	BotzoneIO::read();
 
+	if (lastPosition == -1)
+		lastPosition = myPosition;
 	if (stage == Stage::BIDDING)
 	{
 		// cout<<"GGMYFRIEND"<<endl;
